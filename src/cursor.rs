@@ -7,7 +7,7 @@ use crate::screen::draw_screen;
 
 #[derive(Debug)]
 pub struct CursorPos {
-    x: usize,           // Posición horizontal (0-based)
+    pub(crate) x: usize,           // Posición horizontal (0-based)
     pub(crate) y: usize,           // Posición vertical (0-based)
     last_x: usize,      // Última posición X válida (para movimiento vertical)
     max_y: usize,       // Máxima línea posible
