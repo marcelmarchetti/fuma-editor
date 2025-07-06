@@ -3,7 +3,9 @@ use std::io::stdout;
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use crossterm::style::Print;
+use crossterm::terminal::ClearType::All;
 use crossterm::terminal::disable_raw_mode;
+use crate::cursor::CursorPos;
 
 pub fn clean_screen() -> io::Result<()>{
     execute!(
@@ -17,13 +19,17 @@ pub fn clean_screen() -> io::Result<()>{
 }
 
 pub fn draw_initial_screen(contents: &str) -> io::Result<()> {
+    execute!(stdout(), crossterm::terminal::DisableLineWrap)?;
+    execute!(stdout(), crossterm::terminal::ScrollUp(0))?;
+    let (_, terminal_rows) = crossterm::terminal::size()?;
+
     execute!(
         stdout(),
         crossterm::terminal::Clear(crossterm::terminal::ClearType::All),
         MoveTo(0, 0)
     )?;
-
-    for (i, line) in contents.lines().enumerate() {
+    
+    for (i, line) in contents.lines().take(terminal_rows as usize).enumerate() {
         execute!(
             stdout(),
             MoveTo(0, i as u16),
@@ -34,8 +40,29 @@ pub fn draw_initial_screen(contents: &str) -> io::Result<()> {
     Ok(())
 }
 
-pub fn handle_resize(contents: &str) -> io::Result<()> {
-    clean_screen()?;          // Limpia la pantalla (función existente)
-    draw_initial_screen(contents)?;  // Redibuja el contenido (función existente)
+pub fn draw_resize_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
+    let (_, terminal_rows) = crossterm::terminal::size()?;
+    execute!(stdout(), crossterm::terminal::Clear(All))?;
+
+
+    let start_line = if cursor.y >= terminal_rows as usize {
+        cursor.y - terminal_rows as usize + 1
+    } else {
+        0
+    };
+
+    for (i, line) in contents.lines()
+        .skip(start_line)
+        .take(terminal_rows as usize)
+        .enumerate() {
+        execute!(stdout(), MoveTo(0, i as u16), Print(line))?;
+    }
+
+    Ok(())
+}
+
+pub fn handle_resize(contents: &String) -> io::Result<()> {
+    clean_screen()?;
+    draw_initial_screen(contents)?; 
     Ok(())
 }

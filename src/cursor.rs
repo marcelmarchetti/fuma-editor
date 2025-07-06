@@ -7,10 +7,11 @@ use std::io::{stdout, Write};
 #[derive(Debug)]
 pub struct CursorPos {
     x: usize,           // Posición horizontal (0-based)
-    y: usize,           // Posición vertical (0-based)
+    pub(crate) y: usize,           // Posición vertical (0-based)
     last_x: usize,      // Última posición X válida (para movimiento vertical)
     max_y: usize,       // Máxima línea posible
     line_lengths: Vec<usize>, // Longitudes reales de cada línea
+    contents: String
 }
 
 impl CursorPos {
@@ -18,6 +19,7 @@ impl CursorPos {
         let lines: Vec<&str> = contents.lines().collect();
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect(); // Usamos chars() para contar caracteres Unicode
         let max_y = lines.len().saturating_sub(1);
+        let contents:String = contents.to_string();
 
         Self {
             x: 0,
@@ -25,6 +27,7 @@ impl CursorPos {
             last_x: 0,
             max_y,
             line_lengths,
+            contents,
         }
     }
 
@@ -86,5 +89,11 @@ impl CursorPos {
         } else {
             self.x = self.last_x;
         }
+    }
+
+    pub fn ensure_visible(&mut self) {
+        let (_, rows) = crossterm::terminal::size().unwrap_or((0, 0));
+        self.y = self.y.min(self.max_y);
+        self.clamp_x_to_current_line();
     }
 }

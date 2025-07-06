@@ -11,10 +11,11 @@ use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crossterm::cursor::MoveTo;
 use crossterm::style::Print;
+use crossterm::terminal::ClearType::All;
 use cursor::CursorPos;
 use utils::path::get_route;
 use utils::files::read_file;
-use crate::screen::{clean_screen, draw_initial_screen};
+use crate::screen::{clean_screen, draw_initial_screen, handle_resize};
 
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
@@ -29,15 +30,16 @@ fn program_loop(contents: String) -> io::Result<()> {
 
     loop {
         if event::poll(std::time::Duration::from_millis(100))? {
-            let event = event::read()?; // <--- Capturamos el evento UNA vez
-
-            if let Event::Resize(_, _) = event { // Caso 1: Resize
-                screen::handle_resize(&contents)?;
-                cursor.refresh()?;
-            }
-            if let Event::Key(key_event) = event::read()? {
-                if key_event.kind == KeyEventKind::Press {
-                    match key_event.code {
+            let event = event::read()?;
+            
+            match event {
+                Event::Resize(_, _) => {
+                    //execute!(stdout(), crossterm::terminal::Clear(All))?;
+                    draw_initial_screen(&contents)?;
+                    cursor.refresh()?;
+                },
+                Event::Key(KeyEvent { code, kind, .. }) if kind == KeyEventKind::Press => {
+                    match code {
                         KeyCode::Char('q') => break,
                         KeyCode::Up => cursor.move_up(),
                         KeyCode::Down => cursor.move_down(),
@@ -45,12 +47,11 @@ fn program_loop(contents: String) -> io::Result<()> {
                         KeyCode::Right => cursor.move_right(),
                         KeyCode::Home => cursor.move_home(),
                         KeyCode::End => cursor.move_end(),
-                        KeyCode::Delete => (),
-                        KeyCode::Enter => (),
                         _ => {}
                     }
                     cursor.refresh()?;
-                }
+                },
+                _ => {} // Otros eventos (mouse, etc.)
             }
         }
     }
