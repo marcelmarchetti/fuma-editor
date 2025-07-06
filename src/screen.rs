@@ -4,7 +4,7 @@ use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use crossterm::style::Print;
 use crossterm::terminal::ClearType::All;
-use crossterm::terminal::disable_raw_mode;
+use crossterm::terminal::{disable_raw_mode, BeginSynchronizedUpdate, EndSynchronizedUpdate};
 use crate::cursor::CursorPos;
 
 pub fn clean_screen() -> io::Result<()>{
@@ -18,18 +18,23 @@ pub fn clean_screen() -> io::Result<()>{
     Ok(())
 }
 
-pub fn draw_screen(contents: &str) -> io::Result<()> {
+
+pub fn draw_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
+    
     execute!(stdout(), crossterm::terminal::DisableLineWrap)?;
-    execute!(stdout(), crossterm::terminal::ScrollUp(0))?;
     let (_, terminal_rows) = crossterm::terminal::size()?;
 
     execute!(
         stdout(),
-        crossterm::terminal::Clear(crossterm::terminal::ClearType::All),
-        MoveTo(0, 0)
+        BeginSynchronizedUpdate,
+        crossterm::terminal::Clear(All),
     )?;
-    
-    for (i, line) in contents.lines().take(terminal_rows as usize).enumerate() {
+
+    let lines: Vec<&str> = contents.lines().collect();
+    let start = cursor.vertical_offset;
+    let end = (start + terminal_rows as usize).min(lines.len());
+
+    for (i, line) in lines[start..end].iter().enumerate() {
         execute!(
             stdout(),
             MoveTo(0, i as u16),
@@ -37,11 +42,10 @@ pub fn draw_screen(contents: &str) -> io::Result<()> {
         )?;
     }
 
-    Ok(())
-}
+    execute!(
+        stdout(),
+        EndSynchronizedUpdate,  // <-- ¡NUEVO!
+    )?;
 
-pub fn handle_resize(contents: &String) -> io::Result<()> {
-    clean_screen()?;
-    draw_screen(contents)?; 
     Ok(())
 }
