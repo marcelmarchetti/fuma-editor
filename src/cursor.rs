@@ -75,10 +75,6 @@ impl CursorPos {
         Ok(())
     }
 
-    pub fn get_pos(&self) -> (usize, usize) {
-        (self.x, self.y)
-    }
-
     fn get_current_line_length(&self) -> usize {
         self.line_lengths.get(self.y).copied().unwrap_or(0)
     }
