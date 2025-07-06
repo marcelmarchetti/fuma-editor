@@ -18,7 +18,7 @@ pub fn clean_screen() -> io::Result<()>{
     Ok(())
 }
 
-pub fn draw_initial_screen(contents: &str) -> io::Result<()> {
+pub fn draw_screen(contents: &str) -> io::Result<()> {
     execute!(stdout(), crossterm::terminal::DisableLineWrap)?;
     execute!(stdout(), crossterm::terminal::ScrollUp(0))?;
     let (_, terminal_rows) = crossterm::terminal::size()?;
@@ -40,29 +40,8 @@ pub fn draw_initial_screen(contents: &str) -> io::Result<()> {
     Ok(())
 }
 
-pub fn draw_resize_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
-    let (_, terminal_rows) = crossterm::terminal::size()?;
-    execute!(stdout(), crossterm::terminal::Clear(All))?;
-
-
-    let start_line = if cursor.y >= terminal_rows as usize {
-        cursor.y - terminal_rows as usize + 1
-    } else {
-        0
-    };
-
-    for (i, line) in contents.lines()
-        .skip(start_line)
-        .take(terminal_rows as usize)
-        .enumerate() {
-        execute!(stdout(), MoveTo(0, i as u16), Print(line))?;
-    }
-
-    Ok(())
-}
-
 pub fn handle_resize(contents: &String) -> io::Result<()> {
     clean_screen()?;
-    draw_initial_screen(contents)?; 
+    draw_screen(contents)?; 
     Ok(())
 }

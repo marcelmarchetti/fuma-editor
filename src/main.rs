@@ -15,7 +15,7 @@ use crossterm::terminal::ClearType::All;
 use cursor::CursorPos;
 use utils::path::get_route;
 use utils::files::read_file;
-use crate::screen::{clean_screen, draw_initial_screen, handle_resize};
+use crate::screen::{clean_screen, draw_screen, handle_resize};
 
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
@@ -25,7 +25,7 @@ fn main() -> io::Result<()> {
 }
 fn program_loop(contents: String) -> io::Result<()> {
     let mut cursor = CursorPos::new(&contents);
-    draw_initial_screen(&contents)?;
+    draw_screen(&contents)?;
     cursor.refresh()?;
 
     loop {
@@ -34,8 +34,7 @@ fn program_loop(contents: String) -> io::Result<()> {
             
             match event {
                 Event::Resize(_, _) => {
-                    //execute!(stdout(), crossterm::terminal::Clear(All))?;
-                    draw_initial_screen(&contents)?;
+                    draw_screen(&contents)?;
                     cursor.refresh()?;
                 },
                 Event::Key(KeyEvent { code, kind, .. }) if kind == KeyEventKind::Press => {

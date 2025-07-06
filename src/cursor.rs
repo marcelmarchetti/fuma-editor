@@ -90,10 +90,4 @@ impl CursorPos {
             self.x = self.last_x;
         }
     }
-
-    pub fn ensure_visible(&mut self) {
-        let (_, rows) = crossterm::terminal::size().unwrap_or((0, 0));
-        self.y = self.y.min(self.max_y);
-        self.clamp_x_to_current_line();
-    }
 }
