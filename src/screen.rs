@@ -47,24 +47,30 @@ pub fn draw_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
     Ok(())
 }
 
-pub fn wrap_content(content: &str, width: usize) -> String {
-    content.lines()
-        .flat_map(|line| {
-            let mut wrapped = Vec::new();
-            let mut remaining = line;
+pub fn wrap_content(content: &str, width: usize) -> (String, Vec<bool>) {
+    let mut wrapped_lines = Vec::new();
+    let mut wrap_flags = Vec::new();
 
-            while !remaining.is_empty() {
-                let chunk: String = remaining.chars().take(width).collect();
-                remaining = &remaining[chunk.len()..];
-                wrapped.push(chunk);
-            }
-            
-            if wrapped.is_empty() {
-                wrapped.push(String::new());
-            }
+    for line in content.lines() {
+        let mut wrapped = Vec::new();
+        let mut remaining = line;
 
-            wrapped
-        })
-        .collect::<Vec<String>>()
-        .join("\n") // Unimos con newlines
+        while !remaining.is_empty() {
+            let chunk: String = remaining.chars().take(width).collect();
+            remaining = &remaining[chunk.len()..];
+            wrapped.push(chunk);
+        }
+
+        if wrapped.is_empty() {
+            wrapped.push(String::new());
+        }
+
+        // Marcar si esta línea fue envuelta en múltiples partes
+        let was_wrapped = wrapped.len() > 1;
+        wrap_flags.extend(std::iter::repeat(was_wrapped).take(wrapped.len()));
+
+        wrapped_lines.extend(wrapped);
+    }
+
+    (wrapped_lines.join("\n"), wrap_flags)
 }
