@@ -22,7 +22,7 @@ fn main() -> io::Result<()> {
 
 fn program_loop(contents: String) -> io::Result<()> {
     let (terminal_cols, _) = crossterm::terminal::size()?;
-    let (mut wrapped_content, _) = wrap_content(&contents,terminal_cols as usize);
+    let mut wrapped_content = wrap_content(&contents,terminal_cols as usize);
     let mut cursor = CursorPos::new(&wrapped_content);
     
     
@@ -39,7 +39,7 @@ fn program_loop(contents: String) -> io::Result<()> {
         if event::poll(Duration::from_millis(16))? {
             match event::read()? {
                 Event::Resize(cols, _) => {
-                    (wrapped_content, _) = wrap_content(&wrapped_content,cols as usize);
+                    wrapped_content = wrap_content(&wrapped_content,cols as usize);
                     let old_cursor_state = (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset);
                     cursor = CursorPos::new(&wrapped_content);
                     (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
