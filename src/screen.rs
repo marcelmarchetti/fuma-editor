@@ -54,8 +54,14 @@ pub fn wrap_content(content: &str, width: usize) -> String {
             let mut remaining = line;
 
             while !remaining.is_empty() {
+                // Tomamos hasta `width` caracteres
                 let chunk: String = remaining.chars().take(width).collect();
-                remaining = &remaining[chunk.len()..];
+                
+                let byte_len = chunk.len(); // .len() sobre String da número de bytes
+
+                // Avanzamos correctamente usando byte_len
+                remaining = &remaining[byte_len..];
+
                 wrapped.push(chunk);
             }
 
@@ -66,5 +72,5 @@ pub fn wrap_content(content: &str, width: usize) -> String {
             wrapped
         })
         .collect::<Vec<String>>()
-        .join("\n") // Unimos con newlines
+        .join("\n")
 }
