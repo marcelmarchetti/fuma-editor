@@ -22,8 +22,8 @@ This is just a proof-of-concept. It currently supports:
 Clone the repository:
 
 ```bash
-  git clone https://github.com/yourusername/fumaedit.git  
-  cd fumaedit
+  git clone https://github.com/yourusername/fuma-editor.git  
+  cd fuma-editor
 ```
 
 Build in release mode:
@@ -69,7 +69,7 @@ Once installed, you can run it from anywhere:
 FumaEdit accepts:
 
 - Absolute paths (e.g., `/home/user/file.txt`, `C:\Users\user\file.txt`)
-- Relative paths (e.g., `./file.txt`, `otherdir/file.txt`)
+- Relative paths (e.g., `/file.txt`, `otherdir/file.txt`)
 - Home directory shortcuts (e.g., `~/documents/file.txt` on Unix-like systems)
 
 It attempts to resolve paths correctly regardless of format.
