@@ -21,15 +21,12 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-// al principio del program_loop()
 fn program_loop(contents: String) -> io::Result<()> {
     let (terminal_cols, _) = crossterm::terminal::size()?;
     let mut wrap_result = wrap_content(&contents, terminal_cols as usize);
-
-    // Convertimos a Vec<String>
     let wrapped_lines: Vec<String> = wrap_result.wrapped_text.lines().map(|s| s.to_string()).collect();
 
-    let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), terminal_cols as usize);
+    let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone());
 
     execute!(
         stdout(),
@@ -46,7 +43,7 @@ fn program_loop(contents: String) -> io::Result<()> {
                 Event::Resize(cols, _) => {
                     wrap_result = wrap_content(&contents, cols as usize);
                     let old_cursor_state = (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset);
-                    cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), cols as usize);
+                    cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone());
                     (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
                     draw_screen(&wrap_result.wrapped_text, &cursor)?;
                 },

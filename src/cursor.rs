@@ -12,11 +12,10 @@ pub struct CursorPos {
     line_lengths: Vec<usize>, 
     pub(crate) vertical_offset: usize,
     wrap_ids: Vec<usize>,
-    line_width: usize
 }
 
 impl CursorPos {
-    pub fn new(contents: &str, wrap_ids: Vec<usize>, line_width: usize) -> Self {
+    pub fn new(contents: &str, wrap_ids: Vec<usize>) -> Self {
         let lines: Vec<&str> = contents.lines().collect();
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
@@ -29,7 +28,6 @@ impl CursorPos {
             line_lengths,
             vertical_offset: 0,
             wrap_ids,
-            line_width
         }
     }
 
