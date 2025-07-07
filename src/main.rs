@@ -11,7 +11,8 @@ use crossterm::terminal::{enable_raw_mode};
 use cursor::CursorPos;
 use utils::path::get_route;
 use utils::files::read_file;
-use crate::screen::{clean_screen, draw_screen, wrap_content};
+use crate::screen::{clean_screen, draw_screen};
+use crate::utils::content_wrapper::wrap_content;
 
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
