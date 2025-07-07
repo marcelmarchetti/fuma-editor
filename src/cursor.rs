@@ -12,10 +12,12 @@ pub struct CursorPos {
     max_y: usize,
     line_lengths: Vec<usize>, 
     pub(crate) vertical_offset: usize,
+    wrap_ids: Vec<usize>,
+    line_width: usize
 }
 
 impl CursorPos {
-    pub fn new(contents: &str) -> Self {
+    pub fn new(contents: &str, wrap_ids: Vec<usize>, line_width: usize) -> Self {
         let lines: Vec<&str> = contents.lines().collect();
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
@@ -26,7 +28,9 @@ impl CursorPos {
             last_x: 0,
             max_y,
             line_lengths,
-            vertical_offset: 0
+            vertical_offset: 0,
+            wrap_ids,
+            line_width
         }
     }
 
@@ -49,17 +53,33 @@ impl CursorPos {
         false
     }
 
-    pub fn move_left(&mut self) {
-        self.x = self.x.saturating_sub(1);
-        self.last_x = self.x;
-    }
-
     pub fn move_right(&mut self) {
         let max_x = self.get_current_line_length();
-        if self.x < max_x {
+
+        if self.x + 1 < max_x {
             self.x += 1;
             self.last_x = self.x;
+        } else if self.is_same_logical_line(self.y + 1) {
+            // Salta visualmente a la siguiente línea física del mismo wrap
+            self.y += 1;
+            self.x = 0;
+            self.last_x = self.x;
         }
+    }
+
+    pub fn move_left(&mut self) {
+        if self.x > 0 {
+            self.x -= 1;
+            self.last_x = self.x;
+        } else if self.y > 0 && self.is_same_logical_line(self.y - 1) {
+            self.y -= 1;
+            self.x = self.get_current_line_length();
+            self.last_x = self.x;
+        }
+    }
+
+    fn is_same_logical_line(&self, other_y: usize) -> bool {
+        self.wrap_ids.get(other_y) == self.wrap_ids.get(self.y)
     }
 
     pub fn move_home(&mut self) {

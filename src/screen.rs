@@ -47,30 +47,39 @@ pub fn draw_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
     Ok(())
 }
 
-pub fn wrap_content(content: &str, width: usize) -> String {
-    content.lines()
-        .flat_map(|line| {
-            let mut wrapped = Vec::new();
-            let mut remaining = line;
 
-            while !remaining.is_empty() {
-                // Tomamos hasta `width` caracteres
-                let chunk: String = remaining.chars().take(width).collect();
-                
-                let byte_len = chunk.len(); // .len() sobre String da número de bytes
-
-                // Avanzamos correctamente usando byte_len
-                remaining = &remaining[byte_len..];
-
-                wrapped.push(chunk);
-            }
-
-            if wrapped.is_empty() {
-                wrapped.push(String::new());
-            }
-
-            wrapped
-        })
-        .collect::<Vec<String>>()
-        .join("\n")
+pub struct WrapResult {
+    pub wrapped_text: String,
+    pub wrap_ids: Vec<usize>,
 }
+pub fn wrap_content(content: &str, width: usize) -> WrapResult {
+    let mut result = Vec::new();
+    let mut wrap_ids = Vec::new();
+
+    for (logical_idx, line) in content.lines().enumerate() {
+        let mut remaining = line;
+        let mut first = true;
+
+        while !remaining.is_empty() {
+            let chunk: String = remaining.chars().take(width).collect();
+            let byte_len = chunk.len();
+            remaining = &remaining[byte_len..];
+
+            result.push(chunk);
+            wrap_ids.push(logical_idx); // asignamos el id lógico
+            first = false;
+        }
+
+        // Línea vacía
+        if first {
+            result.push(String::new());
+            wrap_ids.push(logical_idx);
+        }
+    }
+
+    WrapResult {
+        wrapped_text: result.join("\n"),
+        wrap_ids,
+    }
+}
+

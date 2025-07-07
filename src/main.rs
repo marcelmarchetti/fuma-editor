@@ -22,33 +22,32 @@ fn main() -> io::Result<()> {
 
 fn program_loop(contents: String) -> io::Result<()> {
     let (terminal_cols, _) = crossterm::terminal::size()?;
-    let mut wrapped_content = wrap_content(&contents,terminal_cols as usize);
-    let mut cursor = CursorPos::new(&wrapped_content);
-    
-    
+    let mut wrap_result = wrap_content(&contents, terminal_cols as usize);
+    let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), terminal_cols as usize);
+
     execute!(
         stdout(),
         crossterm::terminal::EnterAlternateScreen,
         crossterm::cursor::Hide
     )?;
-    
-    draw_screen(&wrapped_content, &cursor)?;
+
+    draw_screen(&wrap_result.wrapped_text, &cursor)?;
     cursor.refresh()?;
 
     loop {
         if event::poll(Duration::from_millis(16))? {
             match event::read()? {
                 Event::Resize(cols, _) => {
-                    wrapped_content = wrap_content(&contents,cols as usize);
+                    wrap_result = wrap_content(&contents, cols as usize);
                     let old_cursor_state = (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset);
-                    cursor = CursorPos::new(&wrapped_content);
+                    cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids, cols as usize);
                     (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
-                    draw_screen(&wrapped_content, &cursor)?;
+                    draw_screen(&wrap_result.wrapped_text, &cursor)?;
                 },
                 Event::Key(KeyEvent { code, kind: KeyEventKind::Press, .. }) => match code {
                     KeyCode::Char('q') => break,
-                    KeyCode::Up if cursor.move_up() => draw_screen(&wrapped_content, &cursor)?,
-                    KeyCode::Down if cursor.move_down() => draw_screen(&wrapped_content, &cursor)?,
+                    KeyCode::Up if cursor.move_up() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
+                    KeyCode::Down if cursor.move_down() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
                     KeyCode::Left => cursor.move_left(),
                     KeyCode::Right => cursor.move_right(),
                     KeyCode::Home => cursor.move_home(),
@@ -61,5 +60,6 @@ fn program_loop(contents: String) -> io::Result<()> {
             cursor.refresh()?;
         }
     }
+
     Ok(())
 }
