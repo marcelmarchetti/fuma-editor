@@ -8,7 +8,7 @@ use std::io::{stdout, Write};
 pub struct CursorPos {
     pub(crate) x: usize,
     pub(crate) y: usize,
-    last_x: usize,
+    pub(crate) last_x: usize,
     max_y: usize,
     line_lengths: Vec<usize>, 
     pub(crate) vertical_offset: usize,

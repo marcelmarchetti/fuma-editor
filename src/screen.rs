@@ -46,3 +46,25 @@ pub fn draw_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
 
     Ok(())
 }
+
+pub fn wrap_content(content: &str, width: usize) -> String {
+    content.lines()
+        .flat_map(|line| {
+            let mut wrapped = Vec::new();
+            let mut remaining = line;
+
+            while !remaining.is_empty() {
+                let chunk: String = remaining.chars().take(width).collect();
+                remaining = &remaining[chunk.len()..];
+                wrapped.push(chunk);
+            }
+            
+            if wrapped.is_empty() {
+                wrapped.push(String::new());
+            }
+
+            wrapped
+        })
+        .collect::<Vec<String>>()
+        .join("\n") // Unimos con newlines
+}
