@@ -21,9 +21,14 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+// al principio del program_loop()
 fn program_loop(contents: String) -> io::Result<()> {
     let (terminal_cols, _) = crossterm::terminal::size()?;
     let mut wrap_result = wrap_content(&contents, terminal_cols as usize);
+
+    // Convertimos a Vec<String>
+    let wrapped_lines: Vec<String> = wrap_result.wrapped_text.lines().map(|s| s.to_string()).collect();
+
     let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), terminal_cols as usize);
 
     execute!(
@@ -41,14 +46,16 @@ fn program_loop(contents: String) -> io::Result<()> {
                 Event::Resize(cols, _) => {
                     wrap_result = wrap_content(&contents, cols as usize);
                     let old_cursor_state = (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset);
-                    cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids, cols as usize);
+                    cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), cols as usize);
                     (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
                     draw_screen(&wrap_result.wrapped_text, &cursor)?;
                 },
-                Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => match (code, modifiers ){
+                Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => match (code, modifiers){
                     (KeyCode::Char('q'), KeyModifiers::CONTROL) => break,
                     (KeyCode::Up, _) if cursor.move_up() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
                     (KeyCode::Down, _) if cursor.move_down() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
+                    (KeyCode::Left, KeyModifiers::CONTROL) => cursor.move_word_left(&wrapped_lines),
+                    (KeyCode::Right, KeyModifiers::CONTROL) => cursor.move_word_right(&wrapped_lines),
                     (KeyCode::Left, _) => cursor.move_left(),
                     (KeyCode::Right, _) => cursor.move_right(),
                     (KeyCode::Home, _) => cursor.move_home(),

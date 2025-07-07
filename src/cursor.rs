@@ -33,6 +33,15 @@ impl CursorPos {
         }
     }
 
+    fn char_type(&self, c: char) -> u8 {
+        if c.is_alphanumeric() || c == '_' {
+            1
+        } else if c.is_whitespace() {
+            2
+        } else {
+            c as u8
+        }
+    }
     pub fn move_up(&mut self) -> bool {
         if self.y > 0 {
             self.y -= 1;
@@ -95,8 +104,14 @@ impl CursorPos {
         self.line_lengths.get(line).copied().unwrap_or(0)
     }
 
+    fn get_current_line_length(&self) -> usize {
+        self.line_lengths.get(self.y).copied().unwrap_or(0)
+    }
 
-
+    fn get_current_line<'a>(&self, contents: &'a [String]) -> &'a str {
+        contents.get(self.y).map(|s| s.as_str()).unwrap_or("")
+    }
+    
     pub fn move_home(&mut self) {
         if let Some(current_wrap_id) = self.wrap_id_for_line(self.y) {
             if let Some(first_line) = self.wrap_ids.iter().position(|&id| id == current_wrap_id) {
@@ -157,9 +172,7 @@ impl CursorPos {
         
     }
 
-    fn get_current_line_length(&self) -> usize {
-        self.line_lengths.get(self.y).copied().unwrap_or(0)
-    }
+   
 
     fn clamp_x_to_current_line(&mut self) {
         let max_x = self.get_current_line_length();
@@ -169,4 +182,83 @@ impl CursorPos {
             self.x = self.last_x;
         }
     }
+
+    pub fn move_word_right(&mut self, contents: &[String]) {
+        while self.y < self.line_lengths.len() {
+            let line = self.get_current_line(contents);
+            if self.x >= line.len() {
+                if self.is_same_logical_line(self.y + 1) {
+                    self.y += 1;
+                    self.x = 0;
+                    continue;
+                } else {
+                    break;
+                }
+            }
+
+            let rest = &line[self.x..];
+            let mut chars = rest.char_indices();
+            let first = chars.next();
+
+            if let Some((_, c)) = first {
+                let current_type = self.char_type(c);
+                for (i, ch) in chars {
+                    if self.char_type(ch) != current_type {
+                        self.x += i;
+                        self.last_x = self.x;
+                        return;
+                    }
+                }
+
+                self.x = line.len();
+                self.last_x = self.x;
+            } else {
+                break;
+            }
+        }
+    }
+
+    pub fn move_word_left(&mut self, contents: &[String]) {
+        while self.y > 0 || self.x > 0 {
+            if self.x == 0 && self.y > 0 && self.is_same_logical_line(self.y - 1) {
+                self.y -= 1;
+                self.x = self.get_current_line_length();
+                continue;
+            }
+
+            let line = self.get_current_line(contents);
+            let i = self.x;
+
+            if i == 0 {
+                break;
+            }
+
+            let slice = &line[..i];
+            let mut chars: Vec<(usize, char)> = slice.char_indices().collect();
+
+            if let Some((_, c)) = chars.pop() {
+                let current_type = self.char_type(c);
+
+                while let Some(&(idx, ch)) = chars.last() {
+                    if self.char_type(ch) != current_type {
+                        self.x = idx + ch.len_utf8();
+                        self.last_x = self.x;
+                        return;
+                    }
+                    chars.pop();
+                }
+
+                self.x = 0;
+                self.last_x = self.x;
+            }
+
+            break;
+        }
+    }
+
+
+
+
+
+
 }
