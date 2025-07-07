@@ -1,5 +1,4 @@
-﻿// cursor.rs
-use std::io;
+﻿use std::io;
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
@@ -88,15 +87,43 @@ impl CursorPos {
         self.wrap_ids.get(other_y) == self.wrap_ids.get(self.y)
     }
 
-    pub fn move_home(&mut self) {
-        self.x = 0;
-        self.last_x = self.x;
+    fn wrap_id_for_line(&self, line: usize) -> Option<usize> {
+        self.wrap_ids.get(line).copied()
     }
 
-    pub fn move_end(&mut self) {
-        self.x = self.get_current_line_length();
-        self.last_x = self.x;
+    fn get_line_length(&self, line: usize) -> usize {
+        self.line_lengths.get(line).copied().unwrap_or(0)
     }
+
+
+
+    pub fn move_home(&mut self) {
+        if let Some(current_wrap_id) = self.wrap_id_for_line(self.y) {
+            if let Some(first_line) = self.wrap_ids.iter().position(|&id| id == current_wrap_id) {
+                self.y = first_line;
+                self.x = 0;
+                self.last_x = self.x;
+            }
+        } else {
+            self.x = 0;
+            self.last_x = self.x;
+        }
+    }
+
+
+    pub fn move_end(&mut self) {
+        if let Some(current_wrap_id) = self.wrap_id_for_line(self.y) {
+            if let Some(last_line) = self.wrap_ids.iter().rposition(|&id| id == current_wrap_id) {
+                self.y = last_line;
+                self.x = self.get_line_length(last_line);
+                self.last_x = self.x;
+            }
+        } else {
+            self.x = self.get_current_line_length();
+            self.last_x = self.x;
+        }
+    }
+
 
     pub fn refresh(&self) -> io::Result<()> {
         let screen_y = self.y.saturating_sub(self.vertical_offset) as u16;
