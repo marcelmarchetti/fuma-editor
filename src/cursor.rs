@@ -56,11 +56,17 @@ impl CursorPos {
     pub fn move_right(&mut self) {
         let max_x = self.get_current_line_length();
 
-        if self.x + 1 < max_x {
-            self.x += 1;
-            self.last_x = self.x;
+        if self.x + 1 <= max_x {
+            if self.x + 1 == max_x && self.is_same_logical_line(self.y + 1) {
+                self.y += 1;
+                self.x = 0;
+                self.last_x = self.x;
+                return;
+            } else {
+                self.x += 1;
+                self.last_x = self.x;
+            }
         } else if self.is_same_logical_line(self.y + 1) {
-            // Salta visualmente a la siguiente línea física del mismo wrap
             self.y += 1;
             self.x = 0;
             self.last_x = self.x;
@@ -73,7 +79,7 @@ impl CursorPos {
             self.last_x = self.x;
         } else if self.y > 0 && self.is_same_logical_line(self.y - 1) {
             self.y -= 1;
-            self.x = self.get_current_line_length();
+            self.x = self.get_current_line_length().saturating_sub(1);
             self.last_x = self.x;
         }
     }

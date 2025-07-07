@@ -53,25 +53,24 @@ pub struct WrapResult {
     pub wrap_ids: Vec<usize>,
 }
 pub fn wrap_content(content: &str, width: usize) -> WrapResult {
+    let effective_width = width.saturating_sub(2).max(1); // Aseguramos al menos 1
+
     let mut result = Vec::new();
     let mut wrap_ids = Vec::new();
 
     for (logical_idx, line) in content.lines().enumerate() {
         let mut remaining = line;
-        let mut first = true;
 
         while !remaining.is_empty() {
-            let chunk: String = remaining.chars().take(width).collect();
+            let chunk: String = remaining.chars().take(effective_width).collect();
             let byte_len = chunk.len();
             remaining = &remaining[byte_len..];
 
             result.push(chunk);
-            wrap_ids.push(logical_idx); // asignamos el id lógico
-            first = false;
+            wrap_ids.push(logical_idx);
         }
 
-        // Línea vacía
-        if first {
+        if line.is_empty() {
             result.push(String::new());
             wrap_ids.push(logical_idx);
         }
