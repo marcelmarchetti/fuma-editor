@@ -90,7 +90,7 @@ To test during development:
 
 - Arrow keys: Move cursor
 - `Home` / `End`: Jump to start / end of line
-- `q`: Quit
+- `Ctrl + q`: Quit
 
 ---
 

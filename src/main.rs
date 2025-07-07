@@ -6,7 +6,7 @@ use std::io;
 use std::io::stdout;
 use std::time::{Duration};
 use crossterm::{event, execute};
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crossterm::terminal::{enable_raw_mode};
 use cursor::CursorPos;
 use utils::path::get_route;
@@ -45,14 +45,14 @@ fn program_loop(contents: String) -> io::Result<()> {
                     (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
                     draw_screen(&wrap_result.wrapped_text, &cursor)?;
                 },
-                Event::Key(KeyEvent { code, kind: KeyEventKind::Press, .. }) => match code {
-                    KeyCode::Char('q') => break,
-                    KeyCode::Up if cursor.move_up() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
-                    KeyCode::Down if cursor.move_down() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
-                    KeyCode::Left => cursor.move_left(),
-                    KeyCode::Right => cursor.move_right(),
-                    KeyCode::Home => cursor.move_home(),
-                    KeyCode::End => cursor.move_end(),
+                Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => match (code, modifiers ){
+                    (KeyCode::Char('q'), KeyModifiers::CONTROL) => break,
+                    (KeyCode::Up, _) if cursor.move_up() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
+                    (KeyCode::Down, _) if cursor.move_down() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
+                    (KeyCode::Left, _) => cursor.move_left(),
+                    (KeyCode::Right, _) => cursor.move_right(),
+                    (KeyCode::Home, _) => cursor.move_home(),
+                    (KeyCode::End, _) => cursor.move_end(),
 
                     _ => {}
                 },
