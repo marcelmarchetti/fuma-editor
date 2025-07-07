@@ -1,2 +1,2 @@
-﻿pub mod path;  // Exporta tu módulo de paths
+﻿pub mod path;
 pub mod files;

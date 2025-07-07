@@ -1,9 +1,8 @@
 ﻿use std::io;
-use std::io::{stdout, Write};
+use std::io::{stdout};
 use crossterm::cursor::{MoveTo, Show};
-use crossterm::{execute, queue};
+use crossterm::{execute};
 use crossterm::style::Print;
-use crossterm::terminal::ClearType::All;
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
 use crate::cursor::CursorPos;
 
@@ -11,7 +10,7 @@ pub fn clean_screen() -> io::Result<()>{
     execute!(
         stdout(),
         MoveTo(0, 0),
-        crossterm::terminal::Clear(crossterm::terminal::ClearType::All),
+        Clear(ClearType::All),
         Show
     )?;
     disable_raw_mode()?;
@@ -41,7 +40,7 @@ pub fn draw_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
     execute!(
         stdout(),
         MoveTo(cursor.x as u16, (cursor.y - cursor.vertical_offset) as u16),
-        crossterm::cursor::Show,
+        Show,
         EndSynchronizedUpdate
     )?;
 

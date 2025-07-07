@@ -4,16 +4,14 @@ mod screen;
 
 use std::io;
 use std::io::stdout;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use crossterm::{event, execute};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use crossterm::terminal::{enable_raw_mode};
 use cursor::CursorPos;
 use utils::path::get_route;
 use utils::files::read_file;
 use crate::screen::{clean_screen, draw_screen};
-
-const MAX_FPS: u32 = 60;
 
 fn main() -> io::Result<()> {
     enable_raw_mode()?;

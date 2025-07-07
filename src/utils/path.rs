@@ -27,19 +27,19 @@ pub fn get_route() -> String {
         return  env::current_dir().unwrap().to_str().unwrap().to_string() + &input_path.to_string();
     }
 
-    return env::current_dir().unwrap().to_str().unwrap().to_string() + "/" + &input_path.to_string();
+     env::current_dir().unwrap().to_str().unwrap().to_string() + "/" + &input_path.to_string()
 }
 
 fn valid_arguments(args: &Vec<String>) {
     if args.len() < 2 {
         disable_raw_mode().unwrap();
-        eprintln!("Error! No has introducido ninguna ruta!");
+        eprintln!("Error! No path specified.");
         std::process::exit(0)
     }
 
     if args.len() > 2 {
         disable_raw_mode().unwrap();
-        eprintln!("Error! Solo puedes introducir un argumento!");
+        eprintln!("Error! Can't enter more than one argument.");
         std::process::exit(0)
     }
 }

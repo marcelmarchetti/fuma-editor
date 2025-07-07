@@ -3,22 +3,21 @@ use std::io;
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
-use crate::screen::draw_screen;
 
 #[derive(Debug)]
 pub struct CursorPos {
-    pub(crate) x: usize,           // Posición horizontal (0-based)
-    pub(crate) y: usize,           // Posición vertical (0-based)
-    last_x: usize,      // Última posición X válida (para movimiento vertical)
-    max_y: usize,       // Máxima línea posible
-    line_lengths: Vec<usize>, // Longitudes reales de cada línea
+    pub(crate) x: usize,
+    pub(crate) y: usize,
+    last_x: usize,
+    max_y: usize,
+    line_lengths: Vec<usize>, 
     pub(crate) vertical_offset: usize,
 }
 
 impl CursorPos {
     pub fn new(contents: &str) -> Self {
         let lines: Vec<&str> = contents.lines().collect();
-        let line_lengths = lines.iter().map(|l| l.chars().count()).collect(); // Usamos chars() para contar caracteres Unicode
+        let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
 
         Self {
@@ -74,7 +73,6 @@ impl CursorPos {
     }
 
     pub fn refresh(&self) -> io::Result<()> {
-        // Convertimos la posición absoluta y a relativa a la pantalla
         let screen_y = self.y.saturating_sub(self.vertical_offset) as u16;
 
         execute!(
@@ -86,18 +84,18 @@ impl CursorPos {
         Ok(())
     }
 
-    // Nuevos métodos para manejar el scroll
+
     fn ensure_visible(&mut self) -> bool {
         let (_, rows) = crossterm::terminal::size().unwrap();
         let visible_rows = rows as usize;
         let mut did_scroll = false;
 
-        // Scroll hacia arriba si el cursor está por encima del viewport
+        // Upwards scroll
         if self.y < self.vertical_offset {
             self.vertical_offset = self.y;
             did_scroll = true;
         }
-        // Scroll hacia abajo si el cursor está por debajo del viewport
+        // Downwards scroll
         else if self.y >= self.vertical_offset + visible_rows {
             self.vertical_offset = self.y - visible_rows + 1;
             did_scroll = true;
