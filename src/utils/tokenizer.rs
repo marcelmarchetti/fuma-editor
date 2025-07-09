@@ -1,10 +1,4 @@
 use std::fmt;
-use std::io::stdout;
-use crossterm::cursor::MoveTo;
-use crossterm::execute;
-use crossterm::style::Print;
-
-
 #[derive(Clone)]
 pub enum TokenType{
     Word,
