@@ -13,6 +13,7 @@ use utils::path::get_route;
 use utils::files::read_file;
 use crate::screen::{clean_screen, draw_screen};
 use crate::utils::content_wrapper::wrap_content;
+use crate::utils::tokenizer::tokenize_text;
 
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
@@ -33,9 +34,10 @@ fn program_loop(contents: String) -> io::Result<()> {
         crossterm::terminal::EnterAlternateScreen,
         crossterm::cursor::Hide
     )?;
-
+    
     draw_screen(&wrap_result.wrapped_text, &cursor)?;
     cursor.refresh()?;
+    
 
     loop {
         if event::poll(Duration::from_millis(16))? {
@@ -57,6 +59,7 @@ fn program_loop(contents: String) -> io::Result<()> {
                     (KeyCode::Right, _) => cursor.move_right(),
                     (KeyCode::Home, _) => cursor.move_home(),
                     (KeyCode::End, _) => cursor.move_end(),
+                    (KeyCode::Char('t'), _) => _ = tokenize_text(&contents),
 
                     _ => {}
                 },
