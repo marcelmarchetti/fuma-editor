@@ -1,9 +1,10 @@
 mod cursor;
 mod utils;
 mod screen;
-use tokio::time::{interval, Duration};
+
 use std::io;
 use std::io::stdout;
+use std::time::{Duration};
 use crossterm::{event, execute};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crossterm::terminal::{enable_raw_mode};
@@ -14,19 +15,18 @@ use crate::screen::{clean_screen, draw_screen};
 use crate::utils::content_wrapper::wrap_content;
 use crate::utils::tokenizer::{ tokenize_text};
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> io::Result<()> {
     enable_raw_mode()?;
-    program_loop(read_file(&get_route())?).await?;
+    program_loop(read_file(&get_route())?)?;
     clean_screen()?;
     Ok(())
 }
 
-async fn program_loop(contents: String) -> io::Result<()> {
-    let (mut cols,mut rows) = crossterm::terminal::size()?;
-    let mut wrap_result = wrap_content(&contents, cols as usize);
+fn program_loop(contents: String) -> io::Result<()> {
+    let (terminal_cols, _) = crossterm::terminal::size()?;
+    let mut wrap_result = wrap_content(&contents, terminal_cols as usize);
     let mut tokenized_words = tokenize_text(&wrap_result.wrapped_text);
-    let mut interval = interval(Duration::from_millis(200));
+
     let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
 
     execute!(
@@ -40,34 +40,16 @@ async fn program_loop(contents: String) -> io::Result<()> {
     
 
     loop {
-        tokio::select! {
-        _ = interval.tick() => {
-
-            let (cols_actual, rows_actual) = crossterm::terminal::size()?;
-            if cols != cols_actual || rows != rows_actual {
-                wrap_result = wrap_content(&contents, cols_actual as usize);
-                let old_cursor_state = (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset);
-                tokenized_words = tokenize_text(&wrap_result.wrapped_text);
-
-                cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
-                (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
-                draw_screen(&wrap_result.wrapped_text, &cursor)?;
-                cols = cols_actual;
-                rows = rows_actual;
-            }
-        }
-            }
-        if event::poll(std::time::Duration::from_millis(16))? {
+        if event::poll(Duration::from_millis(16))? {
             match event::read()? {
-                Event::Resize(cols_actual, rows_actual) => {
-                    wrap_result = wrap_content(&contents, cols_actual as usize);
+                Event::Resize(cols, _) => {
+                    wrap_result = wrap_content(&contents, cols as usize);
                     let old_cursor_state = (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset);
                     tokenized_words = tokenize_text(&wrap_result.wrapped_text);
+                    
                     cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
                     (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
                     draw_screen(&wrap_result.wrapped_text, &cursor)?;
-                    cols = cols_actual;
-                    rows = rows_actual;
                 },
                 Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => match (code, modifiers){
                     (KeyCode::Char('q'), KeyModifiers::CONTROL) => break,
