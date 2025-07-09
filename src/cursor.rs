@@ -2,7 +2,7 @@
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
-use crate::utils::tokenizer::{Token, TokenWithPos};
+use crate::utils::tokenizer::{TokenWithPos};
 
 
 pub struct CursorPos {
@@ -14,6 +14,8 @@ pub struct CursorPos {
     pub(crate) vertical_offset: usize,
     wrap_ids: Vec<usize>,
     tokenized_words: Vec<TokenWithPos>,
+    last_token: TokenWithPos,
+    last_fast_right: bool,
 }
 
 impl CursorPos {
@@ -21,6 +23,7 @@ impl CursorPos {
         let lines: Vec<&str> = contents.lines().collect();
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
+        let last_token = TokenWithPos {token: None, row: None, col_start: None, col_end : None};
 
         Self {
             x: 0,
@@ -30,17 +33,9 @@ impl CursorPos {
             line_lengths,
             vertical_offset: 0,
             wrap_ids,
-            tokenized_words
-        }
-    }
-
-    fn char_type(&self, c: char) -> u8 {
-        if c.is_alphanumeric() || c == '_' {
-            1
-        } else if c.is_whitespace() {
-            2
-        } else {
-            c as u8
+            tokenized_words,
+            last_token,
+            last_fast_right: false,
         }
     }
     pub fn move_up(&mut self) -> bool {
@@ -107,10 +102,6 @@ impl CursorPos {
 
     fn get_current_line_length(&self) -> usize {
         self.line_lengths.get(self.y).copied().unwrap_or(0)
-    }
-
-    fn get_current_line<'a>(&self, contents: &'a [String]) -> &'a str {
-        contents.get(self.y).map(|s| s.as_str()).unwrap_or("")
     }
     
     pub fn move_home(&mut self) {
@@ -183,14 +174,20 @@ impl CursorPos {
             self.x = self.last_x;
         }
     }
-    pub fn get_token_position_right(&self) -> TokenWithPos {
+    
+    fn initialize_token(& self) -> TokenWithPos{
+        self.tokenized_words.iter().filter(|t| t.row == Some(self.y))
+            .next().map(|t| t.clone()).unwrap_or_else(|| TokenWithPos{token: None, row: Some(self.y), col_start: Some(0), col_end: None})
+    }
+    pub fn get_token_position_right(&mut self) -> TokenWithPos {
         let mut buffer = 0;
-        let mut last_token: TokenWithPos =  self.tokenized_words[0].clone();
+        let mut last_token = self.initialize_token();
         
         loop {
-            for token in self.tokenized_words.iter().filter(|t| t.row == self.y) {
+            for token in self.tokenized_words.iter().filter(|t| t.row == Some(self.y)) {
                 last_token = token.clone();
-                if token.col_start <= self.x + buffer && token.col_end >= self.x + buffer {
+                if token.col_start <= Some(self.x + buffer) && token.col_end >= Some(self.x + buffer) {
+                    self.last_token = token.clone();
                     return token.clone();
                 }
             }
@@ -199,41 +196,66 @@ impl CursorPos {
                 break;
             }
         }
+        self.last_token = last_token.clone();
         last_token
     }
 
-    pub fn get_token_position_left(&self) -> TokenWithPos {
+    pub fn get_token_position_left(&mut self) -> TokenWithPos {
         let mut buffer = 0;
-        let mut last_token: TokenWithPos =  self.tokenized_words[0].clone();
+        let mut last_token = self.initialize_token();
 
         loop {
-            for token in self.tokenized_words.iter().filter(|t| t.row == self.y) {
+            for token in self.tokenized_words.iter().filter(|t| t.row == Some(self.y)) {
                 last_token = token.clone();
-                if token.col_start <= self.x - buffer && token.col_end >= self.x - buffer {
+                if token.col_start <= Some(self.x - buffer) && token.col_end >= Some(self.x - buffer) {
+                    self.last_token = token.clone();
                     return token.clone();
                 }
             }
             buffer += 1;
-            if self.x - buffer == 0 {
+            if self.x.saturating_sub(buffer) <= 0 {
                 break;
             }
         }
+        self.last_token = last_token.clone();
         last_token
     }
     pub fn move_word_right(&mut self){
-        let actual_token = self.get_token_position_right();
-        self.x = actual_token.col_end.clone() + 1;
-        self.last_x = self.x;
-    }
-
-    pub fn move_word_left(&mut self){
-        let actual_token = self.get_token_position_left();
-        if actual_token.col_start.clone() == 0 {
+        let actual_token: TokenWithPos;
+        if !self.last_fast_right && self.last_token.col_start != None {
+            actual_token = self.last_token.clone();
+        }
+        else {
+            actual_token = self.get_token_position_right();
+        }
+        
+        if actual_token.token.is_none() {
             self.x = 0;
         }
         else {
-            self.x = actual_token.col_start.clone() - 1;
+            self.x = actual_token.col_end.clone().unwrap().saturating_add(1);
         }
         self.last_x = self.x;
+
+        self.last_fast_right = true;
+    }
+
+    pub fn move_word_left(&mut self){
+        let actual_token: TokenWithPos;
+        if(self.last_fast_right && self.last_token.col_start != None) {
+            actual_token = self.last_token.clone();
+        }
+        else {
+            actual_token = self.get_token_position_left();
+        }
+        if actual_token.token.is_none() {
+            self.x = 0;
+        }
+        else {
+            self.x = actual_token.col_start.clone().unwrap().saturating_sub(1);
+        }
+        self.last_x = self.x;
+
+        self.last_fast_right = false;
     }
 }

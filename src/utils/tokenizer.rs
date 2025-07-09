@@ -29,10 +29,10 @@ pub struct Token{
 
 #[derive(Clone)]
 pub struct TokenWithPos {
-    pub token: Token,
-    pub row: usize,
-    pub col_start: usize,
-    pub col_end: usize,
+    pub token: Option<Token>,
+    pub row: Option<usize>,
+    pub col_start: Option<usize>,
+    pub col_end: Option<usize>,
 }
 
 
@@ -114,10 +114,10 @@ pub fn map_tokens(content:&String, tokens:Vec<Token>) -> Vec<TokenWithPos> {
             }
             if char == tokens[token_index].value.chars().nth(0).unwrap() {
                 tokens_with_pos.push(TokenWithPos {
-                    token: tokens[token_index].clone(),
-                    row: token_row,
-                    col_start: token_start,
-                    col_end: token_start + tokens[token_index].value.chars().count() - 1,
+                    token: Some(tokens[token_index].clone()),
+                    row: Some(token_row),
+                    col_start: Some(token_start),
+                    col_end: Some(token_start + tokens[token_index].value.chars().count() - 1),
                 });
                 buffer = tokens[token_index].value.chars().count() - 1;
                 token_start += 1;
@@ -127,14 +127,13 @@ pub fn map_tokens(content:&String, tokens:Vec<Token>) -> Vec<TokenWithPos> {
         }
         token_row += 1;
     }
-
-    /*Testing prints
+    /*
+    //Testing prints
     let mut tokens_print: String = "".to_string();
     for token in &tokens_with_pos {
-        let token_str = format!(" {} {} {} || y: {} x1: {} x2:{} Ø ", token.token.id, token.token.value, token.token.token_type, token.row, token.col_start, token.col_end);
-        tokens_print.push_str(&token_str);
-        if token.token.id == 30 { 
-            break; 
+        if token.row == 6{
+            let token_str = format!(" {} {} {} || y: {} x1: {} x2:{} Ø ", token.token.id, token.token.value, token.token.token_type, token.row, token.col_start, token.col_end);
+            tokens_print.push_str(&token_str);
         }
     }
     execute!(stdout(), MoveTo(0,57), Print(format!("Tokens: {}", tokens_print ))).unwrap();
