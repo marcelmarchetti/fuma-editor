@@ -128,6 +128,7 @@ pub fn map_tokens(content:&String, tokens:Vec<Token>) -> Vec<TokenWithPos> {
         token_row += 1;
     }
 
+    /*Testing prints
     let mut tokens_print: String = "".to_string();
     for token in &tokens_with_pos {
         let token_str = format!(" {} {} {} || y: {} x1: {} x2:{} Ø ", token.token.id, token.token.value, token.token.token_type, token.row, token.col_start, token.col_end);
@@ -137,6 +138,6 @@ pub fn map_tokens(content:&String, tokens:Vec<Token>) -> Vec<TokenWithPos> {
         }
     }
     execute!(stdout(), MoveTo(0,57), Print(format!("Tokens: {}", tokens_print ))).unwrap();
-
+    */
     tokens_with_pos
 }

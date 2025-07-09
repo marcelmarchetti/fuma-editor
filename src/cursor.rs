@@ -2,8 +2,9 @@
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
+use crate::utils::tokenizer::{Token, TokenWithPos};
 
-#[derive(Debug)]
+
 pub struct CursorPos {
     pub(crate) x: usize,
     pub(crate) y: usize,
@@ -12,10 +13,11 @@ pub struct CursorPos {
     line_lengths: Vec<usize>, 
     pub(crate) vertical_offset: usize,
     wrap_ids: Vec<usize>,
+    tokenized_words: Vec<TokenWithPos>,
 }
 
 impl CursorPos {
-    pub fn new(contents: &str, wrap_ids: Vec<usize>) -> Self {
+    pub fn new(contents: &str, wrap_ids: Vec<usize>, tokenized_words: Vec<TokenWithPos>) -> Self {
         let lines: Vec<&str> = contents.lines().collect();
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
@@ -28,6 +30,7 @@ impl CursorPos {
             line_lengths,
             vertical_offset: 0,
             wrap_ids,
+            tokenized_words
         }
     }
 
@@ -180,83 +183,57 @@ impl CursorPos {
             self.x = self.last_x;
         }
     }
-
-    pub fn move_word_right(&mut self, contents: &[String]) {
-        while self.y < self.line_lengths.len() {
-            let line = self.get_current_line(contents);
-            if self.x >= line.len() {
-                if self.is_same_logical_line(self.y + 1) {
-                    self.y += 1;
-                    self.x = 0;
-                    continue;
-                } else {
-                    break;
+    pub fn get_token_position_right(&self) -> TokenWithPos {
+        let mut buffer = 0;
+        let mut last_token: TokenWithPos =  self.tokenized_words[0].clone();
+        
+        loop {
+            for token in self.tokenized_words.iter().filter(|t| t.row == self.y) {
+                last_token = token.clone();
+                if token.col_start <= self.x + buffer && token.col_end >= self.x + buffer {
+                    return token.clone();
                 }
             }
-
-            let rest = &line[self.x..];
-            let mut chars = rest.char_indices();
-            let first = chars.next();
-
-            if let Some((_, c)) = first {
-                let current_type = self.char_type(c);
-                for (i, ch) in chars {
-                    if self.char_type(ch) != current_type {
-                        self.x += i;
-                        self.last_x = self.x;
-                        return;
-                    }
-                }
-
-                self.x = line.len();
-                self.last_x = self.x;
-            } else {
+            buffer += 1;
+            if self.x + buffer > self.line_lengths[self.y] {
                 break;
             }
         }
+        last_token
     }
 
-    pub fn move_word_left(&mut self, contents: &[String]) {
-        while self.y > 0 || self.x > 0 {
-            if self.x == 0 && self.y > 0 && self.is_same_logical_line(self.y - 1) {
-                self.y -= 1;
-                self.x = self.get_current_line_length();
-                continue;
+    pub fn get_token_position_left(&self) -> TokenWithPos {
+        let mut buffer = 0;
+        let mut last_token: TokenWithPos =  self.tokenized_words[0].clone();
+
+        loop {
+            for token in self.tokenized_words.iter().filter(|t| t.row == self.y) {
+                last_token = token.clone();
+                if token.col_start <= self.x - buffer && token.col_end >= self.x - buffer {
+                    return token.clone();
+                }
             }
-
-            let line = self.get_current_line(contents);
-            let i = self.x;
-
-            if i == 0 {
+            buffer += 1;
+            if self.x - buffer == 0 {
                 break;
             }
-
-            let slice = &line[..i];
-            let mut chars: Vec<(usize, char)> = slice.char_indices().collect();
-
-            if let Some((_, c)) = chars.pop() {
-                let current_type = self.char_type(c);
-
-                while let Some(&(idx, ch)) = chars.last() {
-                    if self.char_type(ch) != current_type {
-                        self.x = idx + ch.len_utf8();
-                        self.last_x = self.x;
-                        return;
-                    }
-                    chars.pop();
-                }
-
-                self.x = 0;
-                self.last_x = self.x;
-            }
-
-            break;
         }
+        last_token
+    }
+    pub fn move_word_right(&mut self){
+        let actual_token = self.get_token_position_right();
+        self.x = actual_token.col_end.clone() + 1;
+        self.last_x = self.x;
     }
 
-
-
-
-
-
+    pub fn move_word_left(&mut self){
+        let actual_token = self.get_token_position_left();
+        if actual_token.col_start.clone() == 0 {
+            self.x = 0;
+        }
+        else {
+            self.x = actual_token.col_start.clone() - 1;
+        }
+        self.last_x = self.x;
+    }
 }

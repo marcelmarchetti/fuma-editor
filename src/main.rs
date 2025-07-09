@@ -26,8 +26,10 @@ fn program_loop(contents: String) -> io::Result<()> {
     let (terminal_cols, _) = crossterm::terminal::size()?;
     let mut wrap_result = wrap_content(&contents, terminal_cols as usize);
     let wrapped_lines: Vec<String> = wrap_result.wrapped_text.lines().map(|s| s.to_string()).collect();
+    let mut tokenized_words = tokenize_text(&wrap_result.wrapped_text);
+    
 
-    let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone());
+    let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
 
     execute!(
         stdout(),
@@ -45,7 +47,9 @@ fn program_loop(contents: String) -> io::Result<()> {
                 Event::Resize(cols, _) => {
                     wrap_result = wrap_content(&contents, cols as usize);
                     let old_cursor_state = (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset);
-                    cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone());
+                    tokenized_words = tokenize_text(&wrap_result.wrapped_text);
+                    
+                    cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
                     (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
                     draw_screen(&wrap_result.wrapped_text, &cursor)?;
                 },
@@ -53,13 +57,13 @@ fn program_loop(contents: String) -> io::Result<()> {
                     (KeyCode::Char('q'), KeyModifiers::CONTROL) => break,
                     (KeyCode::Up, _) if cursor.move_up() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
                     (KeyCode::Down, _) if cursor.move_down() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
-                    (KeyCode::Left, KeyModifiers::CONTROL) => cursor.move_word_left(&wrapped_lines),
-                    (KeyCode::Right, KeyModifiers::CONTROL) => cursor.move_word_right(&wrapped_lines),
+                    (KeyCode::Left, KeyModifiers::CONTROL) => cursor.move_word_left(),
+                    (KeyCode::Right, KeyModifiers::CONTROL) => cursor.move_word_right(),
                     (KeyCode::Left, _) => cursor.move_left(),
                     (KeyCode::Right, _) => cursor.move_right(),
                     (KeyCode::Home, _) => cursor.move_home(),
                     (KeyCode::End, _) => cursor.move_end(),
-                    (KeyCode::Char('t'), _) => _ = tokenize_text(&contents),
+                    (KeyCode::Char('t'), _) => _ = tokenize_text(&wrap_result.wrapped_text),
 
                     _ => {}
                 },
