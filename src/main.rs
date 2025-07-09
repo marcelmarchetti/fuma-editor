@@ -13,7 +13,7 @@ use utils::path::get_route;
 use utils::files::read_file;
 use crate::screen::{clean_screen, draw_screen};
 use crate::utils::content_wrapper::wrap_content;
-use crate::utils::tokenizer::tokenize_text;
+use crate::utils::tokenizer::{ tokenize_text};
 
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
