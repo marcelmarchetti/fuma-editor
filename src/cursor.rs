@@ -222,7 +222,7 @@ impl CursorPos {
     }
     pub fn move_word_right(&mut self){
         let actual_token: TokenWithPos;
-        if !self.last_fast_right && self.last_token.col_start != None {
+        if !self.last_fast_right && self.last_token.col_start != None && self.last_token.row == Some(self.y) {
             actual_token = self.last_token.clone();
         }
         else {
@@ -242,7 +242,7 @@ impl CursorPos {
 
     pub fn move_word_left(&mut self){
         let actual_token: TokenWithPos;
-        if(self.last_fast_right && self.last_token.col_start != None) {
+        if self.last_fast_right && self.last_token.col_start != None && self.last_token.row == Some(self.y) {
             actual_token = self.last_token.clone();
         }
         else {

@@ -25,9 +25,7 @@ fn main() -> io::Result<()> {
 fn program_loop(contents: String) -> io::Result<()> {
     let (terminal_cols, _) = crossterm::terminal::size()?;
     let mut wrap_result = wrap_content(&contents, terminal_cols as usize);
-    let wrapped_lines: Vec<String> = wrap_result.wrapped_text.lines().map(|s| s.to_string()).collect();
     let mut tokenized_words = tokenize_text(&wrap_result.wrapped_text);
-    
 
     let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
 
