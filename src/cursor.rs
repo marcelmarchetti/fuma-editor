@@ -23,7 +23,7 @@ impl CursorPos {
         let lines: Vec<&str> = contents.lines().collect();
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
-        let last_token = TokenWithPos {token: None, row: None, col_start: None, col_end : None};
+        let last_token = TokenWithPos {token: None, row_start: None, col_start: None, col_end : None, row_end: None};
 
         Self {
             x: 0,
@@ -176,15 +176,15 @@ impl CursorPos {
     }
     
     fn initialize_token(& self) -> TokenWithPos{
-        self.tokenized_words.iter().filter(|t| t.row == Some(self.y))
-            .next().map(|t| t.clone()).unwrap_or_else(|| TokenWithPos{token: None, row: Some(self.y), col_start: Some(0), col_end: None})
+        self.tokenized_words.iter().filter(|t| t.row_start == Some(self.y))
+            .next().map(|t| t.clone()).unwrap_or_else(|| TokenWithPos{token: None, row_start: Some(self.y), col_start: Some(0), col_end: None, row_end: None})
     }
     pub fn get_token_position_right(&mut self) -> TokenWithPos {
         let mut buffer = 0;
         let mut last_token = self.initialize_token();
         
         loop {
-            for token in self.tokenized_words.iter().filter(|t| t.row == Some(self.y)) {
+            for token in self.tokenized_words.iter().filter(|t| t.row_start == Some(self.y)) {
                 last_token = token.clone();
                 if token.col_start <= Some(self.x + buffer) && token.col_end >= Some(self.x + buffer) {
                     self.last_token = token.clone();
@@ -205,7 +205,7 @@ impl CursorPos {
         let mut last_token = self.initialize_token();
 
         loop {
-            for token in self.tokenized_words.iter().filter(|t| t.row == Some(self.y)) {
+            for token in self.tokenized_words.iter().filter(|t| t.row_start == Some(self.y)) {
                 last_token = token.clone();
                 if token.col_start <= Some(self.x - buffer) && token.col_end >= Some(self.x - buffer) {
                     self.last_token = token.clone();
@@ -222,7 +222,7 @@ impl CursorPos {
     }
     pub fn move_word_right(&mut self){
         let actual_token: TokenWithPos;
-        if !self.last_fast_right && self.last_token.col_start != None && self.last_token.row == Some(self.y) {
+        if !self.last_fast_right && self.last_token.col_start != None && self.last_token.row_start == Some(self.y) {
             actual_token = self.last_token.clone();
         }
         else {
@@ -234,6 +234,7 @@ impl CursorPos {
         }
         else {
             self.x = actual_token.col_end.clone().unwrap().saturating_add(1);
+            self.y = actual_token.row_end.clone().unwrap();
         }
         self.last_x = self.x;
 
@@ -242,7 +243,7 @@ impl CursorPos {
 
     pub fn move_word_left(&mut self){
         let actual_token: TokenWithPos;
-        if self.last_fast_right && self.last_token.col_start != None && self.last_token.row == Some(self.y) {
+        if self.last_fast_right && self.last_token.col_start != None {
             actual_token = self.last_token.clone();
         }
         else {
@@ -253,6 +254,7 @@ impl CursorPos {
         }
         else {
             self.x = actual_token.col_start.clone().unwrap().saturating_sub(1);
+            self.y = actual_token.row_start.clone().unwrap();
         }
         self.last_x = self.x;
 

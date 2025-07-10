@@ -3,7 +3,7 @@ pub struct WrapResult {
     pub wrap_ids: Vec<usize>,
 }
 pub fn wrap_content(content: &str, width: usize) -> WrapResult {
-    let effective_width = width.saturating_sub(2).max(1); // Aseguramos al menos 1
+    let effective_width = width.saturating_sub(2).max(1);
 
     let mut result = Vec::new();
     let mut wrap_ids = Vec::new();

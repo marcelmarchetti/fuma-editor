@@ -25,7 +25,7 @@ fn main() -> io::Result<()> {
 fn program_loop(contents: String) -> io::Result<()> {
     let (terminal_cols, _) = crossterm::terminal::size()?;
     let mut wrap_result = wrap_content(&contents, terminal_cols as usize);
-    let mut tokenized_words = tokenize_text(&wrap_result.wrapped_text);
+    let mut tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, false);
 
     let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
 
@@ -45,7 +45,7 @@ fn program_loop(contents: String) -> io::Result<()> {
                 Event::Resize(cols, _) => {
                     wrap_result = wrap_content(&contents, cols as usize);
                     let old_cursor_state = (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset);
-                    tokenized_words = tokenize_text(&wrap_result.wrapped_text);
+                    tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, false);
                     
                     cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
                     (cursor.x, cursor.y, cursor.last_x, cursor.vertical_offset) = old_cursor_state;
@@ -61,7 +61,7 @@ fn program_loop(contents: String) -> io::Result<()> {
                     (KeyCode::Right, _) => cursor.move_right(),
                     (KeyCode::Home, _) => cursor.move_home(),
                     (KeyCode::End, _) => cursor.move_end(),
-                    (KeyCode::Char('t'), _) => _ = tokenize_text(&wrap_result.wrapped_text),
+                    (KeyCode::Char('t'), _) => _ = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, true),
 
                     _ => {}
                 },
