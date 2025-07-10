@@ -38,49 +38,34 @@ fn generate_token(value: &String, id: usize,  token_type: TokenType) -> Token {
     }
 }
 
-pub fn tokenize_text(content: &String)  -> Vec<TokenWithPos>{
+pub fn tokenize_text(wrapped_content: &String) -> Vec<TokenWithPos>{
     let mut tokens: Vec<Token> = Vec::new();
-    
-    let word_count = content
-        .split_whitespace();
+    let word_count = wrapped_content.split_whitespace();
 
     for word in word_count {
-        let mut token_char: String = "".chars().collect();
+        let mut token_buffer: String = "".chars().collect();
 
         for char in word.chars() {
 
             if char.is_alphanumeric() {
-                token_char.push(char);
+                token_buffer.push(char);
             }
             else {
-                if !token_char.is_empty(){
-                    tokens.push(generate_token(&token_char, tokens.len(), TokenType::Word));
-                    token_char.clear();
+                if !token_buffer.is_empty(){
+                    tokens.push(generate_token(&token_buffer, tokens.len(), TokenType::Word));
+                    token_buffer.clear();
                 }
 
                 tokens.push(generate_token(&char.to_string(), tokens.len(), TokenType::Symbol));
             }
         }
-        if !token_char.is_empty() {
-            tokens.push(generate_token(&token_char, tokens.len(), TokenType::Word));
+        if !token_buffer.is_empty() {
+            tokens.push(generate_token(&token_buffer, tokens.len(), TokenType::Word));
         }
-        token_char.clear();
+        token_buffer.clear();
     }
-
-    /*Testing prints
-    let raw_word_count = content.split_whitespace().count();
-    let mut token_print: String = "".to_string();
-    for token in &tokens {
-        let token_str = format!("{} {} {} Ø ", token.id, token.value, token.token_type);
-        token_print.push_str(&token_str);
-    }
-
     
-    execute!(stdout(), MoveTo(0,55), Print(format!("Longitud: {}", content.len()))).unwrap();
-    execute!(stdout(), MoveTo(0,56), Print(format!("Palabras: {}", raw_word_count))).unwrap();
-    execute!(stdout(), MoveTo(0,57), Print(format!("Tokens: {}", token_print ))).unwrap();
-    */
-    map_tokens(content, tokens)
+    map_tokens(wrapped_content, tokens)
 }
 
 pub fn map_tokens(content:&String, tokens:Vec<Token>) -> Vec<TokenWithPos> {
