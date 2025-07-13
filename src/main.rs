@@ -8,7 +8,7 @@ use std::time::{Duration};
 use crossterm::{event, execute};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crossterm::terminal::{enable_raw_mode};
-use cursor::CursorPos;
+use cursor::{CursorPos};
 use utils::path::get_route;
 use utils::files::read_file;
 use crate::screen::{clean_screen, draw_screen};
@@ -61,7 +61,8 @@ fn program_loop(contents: String) -> io::Result<()> {
                     (KeyCode::Right, _) => cursor.move_right(),
                     (KeyCode::Home, _) => cursor.move_home(),
                     (KeyCode::End, _) => cursor.move_end(),
-                    (KeyCode::Char('t'), _) => _ = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, true),
+                    (KeyCode::Char('t'), KeyModifiers::CONTROL) => _ = cursor.get_token_on_cursor(),
+                    (KeyCode::Char('t'), KeyModifiers::NONE) => _ = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, true),
 
                     _ => {}
                 },

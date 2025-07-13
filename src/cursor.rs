@@ -2,6 +2,7 @@
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
+use crossterm::style::Print;
 use crate::utils::tokenizer::{TokenWithPos};
 use crate::utils::direction::Direction;
 
@@ -174,6 +175,23 @@ impl CursorPos {
         } else {
             self.x = self.last_x;
         }
+    }
+    
+    pub fn get_token_on_cursor(& self) -> Option<TokenWithPos>{
+        let token = self.tokenized_words.iter()
+            .find(|t| {
+                // Para tokens de una sola línea
+                (t.row_start == Some(self.y) && t.row_end == Some(self.y) &&
+                    t.col_start <= Some(self.x) && t.col_end >= Some(self.x)) ||
+                    // Para tokens multilínea
+                    (t.row_start < Some(self.y) && t.row_end > Some(self.y)) ||
+                    (t.row_start == Some(self.y) && t.row_end > Some(self.y) && t.col_start <= Some(self.x)) ||
+                    (t.row_start < Some(self.y) && t.row_end == Some(self.y)) && t.col_end >= Some(self.x)
+            });
+        if token.is_some(){
+            return token.cloned();
+        }
+        None
     }
     
     fn get_token(&mut self, direction: Direction) -> Option<TokenWithPos>{
