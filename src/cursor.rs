@@ -183,11 +183,11 @@ impl CursorPos {
             .find(|t| {
                 // Single-line tokens
                 (t.row_start == Some(self.y) && t.row_end == Some(self.y) &&
-                    t.col_start <= Some(self.x) && t.col_end >= Some(self.x)) ||
-                    // Multi line tokens
-                    (t.row_start < Some(self.y) && t.row_end > Some(self.y)) ||
-                    (t.row_start == Some(self.y) && t.row_end > Some(self.y) && t.col_start <= Some(self.x)) ||
-                    (t.row_start < Some(self.y) && t.row_end == Some(self.y)) && t.col_end >= Some(self.x)
+                t.col_start <= Some(self.x) && t.col_end >= Some(self.x)) ||
+                // Multi line tokens
+                (t.row_start < Some(self.y) && t.row_end > Some(self.y)) ||
+                (t.row_start == Some(self.y) && t.row_end > Some(self.y) && t.col_start <= Some(self.x)) ||
+                (t.row_start < Some(self.y) && t.row_end == Some(self.y)) && t.col_end >= Some(self.x)
             });
         if token.is_some(){
             return token.cloned();
@@ -205,11 +205,11 @@ impl CursorPos {
             if let Some(token) = self.tokenized_words.iter().find(|t| {
                 // Single-line tokens
                 (t.row_start <= Some(self.y) && t.row_end >= Some(self.y) &&
-                    t.col_start <= Some(col_search) && t.col_end >= Some(col_search)) ||
-                    // Multi line tokens
-                    (t.row_start < Some(self.y) && t.row_end > Some(self.y)) ||
-                    (t.row_start == Some(self.y) && t.col_start <= Some(col_search) && t.row_end > Some(self.y)) ||
-                    (t.row_end == Some(self.y) && t.col_end >= Some(col_search) && t.row_start < Some(self.y))
+                t.col_start <= Some(col_search) && t.col_end >= Some(col_search)) ||
+                // Multi line tokens
+                (t.row_start < Some(self.y) && t.row_end > Some(self.y)) ||
+                (t.row_start == Some(self.y) && t.col_start <= Some(col_search) && t.row_end > Some(self.y)) ||
+                (t.row_end == Some(self.y) && t.col_end >= Some(col_search) && t.row_start < Some(self.y))
             }) {
                 self.last_token = token.clone();
                 return Some(token.clone());
@@ -218,7 +218,7 @@ impl CursorPos {
             buffer += direction.step();
             let next_search_col = self.x as isize + buffer;
 
-            //If it doesn't return a token, we check if the direction of the move,
+            //If it doesn't return a token, we check the direction of the move,
             //and if the next/previous row is part of the same logical line to force (or not) a jump
             if next_search_col >= self.line_lengths[self.y] as isize || next_search_col < 0 {
                 match direction {
@@ -252,17 +252,14 @@ impl CursorPos {
         let col_end = token.col_end.unwrap_or(0).saturating_add(1);
         
         (token.row_start <= Some(self.y) && token.row_end >= Some(self.y)) &&
-            (
-                // Single-line
-                (token.row_start == token.row_end &&
+            // Single-line
+            ((token.row_start == token.row_end &&
                     self.x >= col_start &&
                     self.x <= col_end) ||
-
-                    // Multi line
-                    ((token.row_start < Some(self.y) && token.row_end > Some(self.y)) ||
-                        (token.row_start == Some(self.y) && self.x >= col_start) ||
-                        (token.row_end == Some(self.y) && self.x <= col_end))
-            )
+            // Multi line    
+            ((token.row_start < Some(self.y) && token.row_end > Some(self.y)) ||
+                (token.row_start == Some(self.y) && self.x >= col_start) ||
+                (token.row_end == Some(self.y) && self.x <= col_end)))
     }
     
     fn use_last_token(&self, direction: Direction) -> bool {
@@ -272,7 +269,6 @@ impl CursorPos {
         }
     }
     pub fn move_token(&mut self, direction: Direction){
-
         let actual_token:Option<TokenWithPos> = if self.use_last_token(direction) {
             Some(self.last_token.clone())
         } else {
