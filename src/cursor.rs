@@ -250,7 +250,6 @@ impl CursorPos {
                     self.x = actual_token.col_end.unwrap().saturating_add(1);
                     self.y = actual_token.row_end.unwrap();
                     self.last_fast_right = true;
-                    execute!(stdout(), MoveTo(0,55), Print(format!("col_start: {}, col_end: {}", actual_token.row_start.unwrap(), actual_token.row_end.unwrap()))).unwrap();
                 }
                 Direction::Left => {
                     //Fallback to ensure jump upwards if we are at the beginning of a line,
@@ -264,7 +263,6 @@ impl CursorPos {
                     self.x = actual_token.col_start.unwrap().saturating_sub(1);
                     self.y = actual_token.row_start.unwrap();
                     self.last_fast_right = false;
-                    execute!(stdout(), MoveTo(0,55), Print(format!("col_start: {}, col_end: {}", actual_token.row_start.unwrap(), actual_token.row_end.unwrap()))).unwrap();
                 }
             }
         }
