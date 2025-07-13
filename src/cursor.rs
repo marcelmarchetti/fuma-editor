@@ -2,7 +2,9 @@
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
+use crossterm::style::Print;
 use crate::utils::tokenizer::{TokenWithPos};
+use crate::utils::direction::Direction;
 
 
 pub struct CursorPos {
@@ -23,7 +25,7 @@ impl CursorPos {
         let lines: Vec<&str> = contents.lines().collect();
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
-        let last_token = TokenWithPos {token: None, row_start: None, col_start: None, col_end : None, row_end: None};
+        let last_token = tokenized_words[0].clone();
 
         Self {
             x: 0,
@@ -150,12 +152,12 @@ impl CursorPos {
         let visible_rows = rows as usize;
         let mut did_scroll = false;
 
-        // Upwards scroll
+        // Upward scroll
         if self.y < self.vertical_offset {
             self.vertical_offset = self.y;
             did_scroll = true;
         }
-        // Downwards scroll
+        // Downward scroll
         else if self.y >= self.vertical_offset + visible_rows {
             self.vertical_offset = self.y - visible_rows + 1;
             did_scroll = true;
@@ -175,89 +177,97 @@ impl CursorPos {
         }
     }
     
-    fn initialize_token(& self) -> TokenWithPos{
-        self.tokenized_words.iter().filter(|t| t.row_start == Some(self.y))
-            .next().map(|t| t.clone()).unwrap_or_else(|| TokenWithPos{token: None, row_start: Some(self.y), col_start: Some(0), col_end: None, row_end: None})
-    }
-    pub fn get_token_position_right(&mut self) -> TokenWithPos {
-        let mut buffer = 0;
-        let mut last_token = self.initialize_token();
-        
+    fn get_token(&mut self, direction: Direction) -> TokenWithPos{
+        let mut buffer:isize = 0;
+        let mut filtered_tokens = self.tokenized_words.iter().filter(|t| t.row_start <= Some(self.y) && t.row_end >= Some(self.y));
+
         loop {
-            for token in self.tokenized_words.iter().filter(|t| t.row_start == Some(self.y)) {
-                last_token = token.clone();
-                if token.col_start <= Some(self.x + buffer) && token.col_end >= Some(self.x + buffer) {
+            let col_search: usize = self.x.saturating_add_signed(buffer);
+            for token in filtered_tokens.clone() {
+                if token.col_start <= Some(col_search) && token.col_end >= Some(col_search) {
                     self.last_token = token.clone();
                     return token.clone();
                 }
             }
-            buffer += 1;
-            if self.x + buffer > self.line_lengths[self.y] {
+            buffer += direction.step();
+
+            let next_search_col = self.x as isize + buffer;
+            if next_search_col >= self.line_lengths[self.y] as isize || next_search_col < 0 {
                 break;
             }
-        }
-        self.last_token = last_token.clone();
-        last_token
-    }
 
-    pub fn get_token_position_left(&mut self) -> TokenWithPos {
-        let mut buffer = 0;
-        let mut last_token = self.initialize_token();
-
-        loop {
-            for token in self.tokenized_words.iter().filter(|t| t.row_start == Some(self.y)) {
-                last_token = token.clone();
-                if token.col_start <= Some(self.x - buffer) && token.col_end >= Some(self.x - buffer) {
-                    self.last_token = token.clone();
-                    return token.clone();
-                }
-            }
-            buffer += 1;
-            if self.x.saturating_sub(buffer) <= 0 {
-                break;
-            }
-        }
-        self.last_token = last_token.clone();
-        last_token
-    }
-    pub fn move_word_right(&mut self){
-        let actual_token: TokenWithPos;
-        if !self.last_fast_right && self.last_token.col_start != None && self.last_token.row_start == Some(self.y) {
-            actual_token = self.last_token.clone();
-        }
-        else {
-            actual_token = self.get_token_position_right();
         }
         
-        if actual_token.token.is_none() {
-            self.x = 0;
+        match direction {
+            Direction::Left => {
+                if self.wrap_ids[self.y] == self.wrap_ids[self.y - 1] {
+                    self.last_token = self.tokenized_words.iter().rev().find(|t| 
+                        t.row_start == Some(self.y - 1) || t.row_end == Some(self.y - 1)).cloned().unwrap();
+                    return self.last_token.clone();
+                }
+                self.last_token = filtered_tokens.nth(0).unwrap().clone();
+                filtered_tokens.nth(0).unwrap().clone()
+            }
+            Direction::Right => {
+                if self.wrap_ids[self.y] == self.wrap_ids[self.y + 1] {
+                    self.last_token = self.tokenized_words.iter().find(|t| 
+                        t.row_end   == Some(self.y + 1) || t.row_start == Some(self.y + 1)).cloned().unwrap();
+                    return self.last_token.clone()
+                }
+                self.last_token = filtered_tokens.clone().last().unwrap().clone();
+                filtered_tokens.last().unwrap().clone()
+            }
         }
-        else {
-            self.x = actual_token.col_end.clone().unwrap().saturating_add(1);
-            self.y = actual_token.row_end.clone().unwrap();
-        }
-        self.last_x = self.x;
-
-        self.last_fast_right = true;
+        
     }
 
-    pub fn move_word_left(&mut self){
-        let actual_token: TokenWithPos;
-        if self.last_fast_right && self.last_token.col_start != None {
-            actual_token = self.last_token.clone();
+    fn cursor_in_last_token(&self) -> bool {
+        self.last_token.col_start.is_some()
+            && self.last_token.row_start <= Some(self.y)
+            && self.last_token.row_end   >= Some(self.y)
+            && self.last_token.col_start.unwrap().saturating_sub(1)  <= self.x
+            && self.last_token.col_end.unwrap().saturating_add(1) >= self.x
+    }
+    pub fn move_token(&mut self, direction: Direction){
+        let use_last_token = match direction {
+            Direction::Right => !self.last_fast_right && self.cursor_in_last_token(),
+            Direction::Left  =>  self.last_fast_right && self.cursor_in_last_token(),
+        };
+
+        let actual_token = if use_last_token {
+            self.last_token.clone()
         }
         else {
-            actual_token = self.get_token_position_left();
-        }
+            self.get_token(direction)
+        };
+
         if actual_token.token.is_none() {
             self.x = 0;
         }
         else {
-            self.x = actual_token.col_start.clone().unwrap().saturating_sub(1);
-            self.y = actual_token.row_start.clone().unwrap();
+            match direction {
+                Direction::Right => {
+                    self.x = actual_token.col_end.unwrap().saturating_add(1);
+                    self.y = actual_token.row_end.unwrap();
+                    self.last_fast_right = true;
+                    execute!(stdout(), MoveTo(0,55), Print(format!("col_start: {}, col_end: {}", actual_token.row_start.unwrap(), actual_token.row_end.unwrap()))).unwrap();
+                }
+                Direction::Left => {
+                    //Fallback to ensure jump upwards if we are at the beginning of a line,
+                    //and it's the same logic line
+                    if self.x == 0 && self.wrap_ids[self.y] == self.wrap_ids[self.y - 1] {
+                        self.x = self.line_lengths.get(self.y - 1).unwrap().clone() - 1;
+                        self.y = self.y.saturating_sub(1);
+                        return
+                    }
+                    
+                    self.x = actual_token.col_start.unwrap().saturating_sub(1);
+                    self.y = actual_token.row_start.unwrap();
+                    self.last_fast_right = false;
+                    execute!(stdout(), MoveTo(0,55), Print(format!("col_start: {}, col_end: {}", actual_token.row_start.unwrap(), actual_token.row_end.unwrap()))).unwrap();
+                }
+            }
         }
         self.last_x = self.x;
-
-        self.last_fast_right = false;
     }
 }

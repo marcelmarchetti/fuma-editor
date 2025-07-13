@@ -14,7 +14,7 @@ use utils::files::read_file;
 use crate::screen::{clean_screen, draw_screen};
 use crate::utils::content_wrapper::wrap_content;
 use crate::utils::tokenizer::{ tokenize_text};
-
+use crate::utils::direction::Direction;
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
     program_loop(read_file(&get_route())?)?;
@@ -55,8 +55,8 @@ fn program_loop(contents: String) -> io::Result<()> {
                     (KeyCode::Char('q'), KeyModifiers::CONTROL) => break,
                     (KeyCode::Up, _) if cursor.move_up() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
                     (KeyCode::Down, _) if cursor.move_down() => draw_screen(&wrap_result.wrapped_text, &cursor)?,
-                    (KeyCode::Left, KeyModifiers::CONTROL) => cursor.move_word_left(),
-                    (KeyCode::Right, KeyModifiers::CONTROL) => cursor.move_word_right(),
+                    (KeyCode::Left, KeyModifiers::CONTROL) => cursor.move_token(Direction::Left),
+                    (KeyCode::Right, KeyModifiers::CONTROL) => cursor.move_token(Direction::Right),
                     (KeyCode::Left, _) => cursor.move_left(),
                     (KeyCode::Right, _) => cursor.move_right(),
                     (KeyCode::Home, _) => cursor.move_home(),
