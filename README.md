@@ -89,6 +89,7 @@ To test during development:
 ## Controls
 
 - Arrow keys: Move cursor
+- `Ctrl + ←` / `Ctrl + →`: Jump to the start/end of the current token
 - `Home` / `End`: Jump to start / end of line
 - `Ctrl + q`: Quit
 
