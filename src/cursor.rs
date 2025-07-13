@@ -3,6 +3,7 @@ use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
 use crossterm::style::Print;
+use crate::utils::debug::print_bool;
 use crate::utils::tokenizer::{TokenWithPos};
 use crate::utils::direction::Direction;
 
@@ -180,10 +181,10 @@ impl CursorPos {
     pub fn get_token_on_cursor(& self) -> Option<TokenWithPos>{
         let token = self.tokenized_words.iter()
             .find(|t| {
-                // Para tokens de una sola línea
+                // Single-line tokens
                 (t.row_start == Some(self.y) && t.row_end == Some(self.y) &&
                     t.col_start <= Some(self.x) && t.col_end >= Some(self.x)) ||
-                    // Para tokens multilínea
+                    // Multi line tokens
                     (t.row_start < Some(self.y) && t.row_end > Some(self.y)) ||
                     (t.row_start == Some(self.y) && t.row_end > Some(self.y) && t.col_start <= Some(self.x)) ||
                     (t.row_start < Some(self.y) && t.row_end == Some(self.y)) && t.col_end >= Some(self.x)
@@ -194,73 +195,88 @@ impl CursorPos {
         None
     }
     
-    fn get_token(&mut self, direction: Direction) -> Option<TokenWithPos>{
-        let mut buffer:isize = 0;
-        let mut filtered_tokens = 
-            self.tokenized_words.iter().filter(|t| t.row_start <= Some(self.y) && t.row_end >= Some(self.y));
+    fn get_token(&mut self, direction: Direction) -> Option<TokenWithPos> {
+        let mut buffer: isize = 0;
+        let current_wrap_id = self.wrap_ids.get(self.y).copied();
 
-        if filtered_tokens.clone().count() == 0 {
-            return None;
-        }
-        
         loop {
-            let col_search: usize = self.x.saturating_add_signed(buffer);
-            for token in filtered_tokens.clone() {
-                if token.col_start <= Some(col_search) && token.col_end >= Some(col_search) {
-                    self.last_token = token.clone();
-                    return Some(token.clone());
-                }
+            let col_search = self.x.saturating_add_signed(buffer);
+            
+            if let Some(token) = self.tokenized_words.iter().find(|t| {
+                // Single-line tokens
+                (t.row_start <= Some(self.y) && t.row_end >= Some(self.y) &&
+                    t.col_start <= Some(col_search) && t.col_end >= Some(col_search)) ||
+                    // Multi line tokens
+                    (t.row_start < Some(self.y) && t.row_end > Some(self.y)) ||
+                    (t.row_start == Some(self.y) && t.col_start <= Some(col_search) && t.row_end > Some(self.y)) ||
+                    (t.row_end == Some(self.y) && t.col_end >= Some(col_search) && t.row_start < Some(self.y))
+            }) {
+                self.last_token = token.clone();
+                return Some(token.clone());
             }
+            
             buffer += direction.step();
-
             let next_search_col = self.x as isize + buffer;
+
+            //If it doesn't return a token, we check if the direction of the move,
+            //and if the next/previous row is part of the same logical line to force (or not) a jump
             if next_search_col >= self.line_lengths[self.y] as isize || next_search_col < 0 {
+                match direction {
+                    Direction::Right if self.y < self.wrap_ids.len().saturating_sub(1) => {
+                        if current_wrap_id == self.wrap_ids.get(self.y + 1).copied() {
+                            self.y += 1;
+                            self.x = 0;
+                            buffer = 0;
+                            continue;
+                        }
+                    },
+                    Direction::Left if self.y > 0 => {
+                        if current_wrap_id == self.wrap_ids.get(self.y - 1).copied() {
+                            self.y -= 1;
+                            self.x = self.line_lengths[self.y];
+                            buffer = 0;
+                            continue;
+                        }
+                    },
+                    _ => ()
+                }
                 break;
             }
         }
-        
-        //If it doesn't return a token, we check if the direction of the move,
-        //and if the next/previous row is part of the same logical line to force (or not) a jump
-        match direction {
-            Direction::Left => {
-                if self.wrap_ids[self.y] == self.wrap_ids[self.y - 1] {
-                    self.last_token = self.tokenized_words.iter().rev().find(|t| 
-                        t.row_start == Some(self.y - 1) || t.row_end == Some(self.y - 1)).cloned().unwrap();
-                    return Some(self.last_token.clone());
-                }
-                self.last_token = filtered_tokens.nth(0).unwrap().clone();
-                Some(filtered_tokens.nth(0).unwrap().clone())
-            }
-            Direction::Right => {
-                if self.wrap_ids[self.y] == self.wrap_ids[self.y + 1] {
-                    self.last_token = self.tokenized_words.iter().find(|t| 
-                        t.row_end   == Some(self.y + 1) || t.row_start == Some(self.y + 1)).cloned().unwrap();
-                    return Some(self.last_token.clone())
-                }
-                self.last_token = filtered_tokens.clone().last().unwrap().clone();
-                Some(filtered_tokens.last().unwrap().clone())
-            }
-        }
-        
+        None
     }
-
+    
     fn cursor_in_last_token(&self) -> bool {
-        self.last_token.col_start.is_some()
-            && self.last_token.row_start <= Some(self.y)
-            && self.last_token.row_end   >= Some(self.y)
-            && self.last_token.col_start.unwrap().saturating_sub(1)  <= self.x
-            && self.last_token.col_end.unwrap().saturating_add(1) >= self.x
+        let token = &self.last_token;
+        let col_start = token.col_start.unwrap_or(0).saturating_sub(1);
+        let col_end = token.col_end.unwrap_or(0).saturating_add(1);
+        
+        (token.row_start <= Some(self.y) && token.row_end >= Some(self.y)) &&
+            (
+                // Single-line
+                (token.row_start == token.row_end &&
+                    self.x >= col_start &&
+                    self.x <= col_end) ||
+
+                    // Multi line
+                    ((token.row_start < Some(self.y) && token.row_end > Some(self.y)) ||
+                        (token.row_start == Some(self.y) && self.x >= col_start) ||
+                        (token.row_end == Some(self.y) && self.x <= col_end))
+            )
     }
-    pub fn move_token(&mut self, direction: Direction){
-        let use_last_token = match direction {
+    
+    fn use_last_token(&self, direction: Direction) -> bool {
+        match direction {
             Direction::Right => !self.last_fast_right && self.cursor_in_last_token(),
             Direction::Left  =>  self.last_fast_right && self.cursor_in_last_token(),
-        };
-
-        let actual_token:Option<TokenWithPos> = if use_last_token {
-            Some(self.last_token.clone())
         }
-        else {
+    }
+    pub fn move_token(&mut self, direction: Direction){
+
+        let actual_token:Option<TokenWithPos> = if self.use_last_token(direction) {
+            Some(self.last_token.clone())
+        } else {
+            
             self.get_token(direction)
         };
 
@@ -275,12 +291,6 @@ impl CursorPos {
                         self.last_fast_right = true;
                     }
                     Direction::Left => {
-                        if self.x == 0 && self.wrap_ids[self.y] == self.wrap_ids[self.y - 1] {
-                            self.x = self.line_lengths.get(self.y - 1).unwrap().clone() - 1;
-                            self.y = self.y.saturating_sub(1);
-                            self.last_x = self.x;
-                            return;
-                        }
                         self.x = token.col_start.unwrap().saturating_sub(1);
                         self.y = token.row_start.unwrap();
                         self.last_fast_right = false;

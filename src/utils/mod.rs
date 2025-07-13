@@ -3,4 +3,4 @@ pub mod files;
 pub mod content_wrapper;
 pub mod tokenizer;
 pub mod direction;
-mod debug;
+pub mod debug;
