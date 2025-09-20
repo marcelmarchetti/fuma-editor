@@ -3,19 +3,12 @@ mod utils;
 mod screen;
 mod guards;
 mod error_helpers;
+mod editor;
 
 use std::io;
-use std::io::stdout;
-use std::time::{Duration};
-use crossterm::{event, execute};
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
-use cursor::{CursorPos};
 use crate::error_helpers::main_error_helper::{try_enable_raw_mode, try_enter_alternate_screen, try_read_file};
 use crate::guards::alt_screen_guard::AltScreenGuard;
-use crate::screen::{draw_screen};
-use crate::utils::content_wrapper::wrap_content;
-use crate::utils::tokenizer::{ tokenize_text};
-use crate::utils::direction::Direction;
+use  editor::{program_loop};
 
 fn main() -> io::Result<()> {
     try_enter_alternate_screen()?;
@@ -27,22 +20,17 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+
+/*
 fn program_loop(contents: String) -> io::Result<()> {
     let (terminal_cols, _) = crossterm::terminal::size()?;
     let mut wrap_result = wrap_content(&contents, terminal_cols as usize);
     let mut tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, false);
 
     let mut cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words);
-
-    execute!(
-        stdout(),
-        crossterm::terminal::EnterAlternateScreen,
-        crossterm::cursor::Hide
-    )?;
     
     draw_screen(&wrap_result.wrapped_text, &cursor)?;
     cursor.refresh()?;
-    
 
     loop {
         if event::poll(Duration::from_millis(16))? {
@@ -79,3 +67,6 @@ fn program_loop(contents: String) -> io::Result<()> {
 
     Ok(())
 }
+
+
+ */
