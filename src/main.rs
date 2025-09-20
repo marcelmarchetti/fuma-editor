@@ -1,24 +1,30 @@
 mod cursor;
 mod utils;
 mod screen;
+mod guards;
+mod error_helpers;
 
+use std::fs::read_dir;
 use std::io;
 use std::io::stdout;
 use std::time::{Duration};
 use crossterm::{event, execute};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
-use crossterm::terminal::{enable_raw_mode};
 use cursor::{CursorPos};
-use utils::path::get_route;
-use utils::files::read_file;
-use crate::screen::{clean_screen, draw_screen};
+use crate::error_helpers::main_error_helper::{try_enable_raw_mode, try_enter_alternate_screen, try_read_file};
+use crate::guards::alt_screen_guard::AltScreenGuard;
+use crate::screen::{draw_screen};
 use crate::utils::content_wrapper::wrap_content;
 use crate::utils::tokenizer::{ tokenize_text};
 use crate::utils::direction::Direction;
+
 fn main() -> io::Result<()> {
-    enable_raw_mode()?;
-    program_loop(read_file(&get_route())?)?;
-    clean_screen()?;
+    try_enter_alternate_screen()?;
+    let _guard = AltScreenGuard;
+    try_enable_raw_mode()?;
+    let contents = try_read_file()?;
+    program_loop(contents)?;
+
     Ok(())
 }
 
