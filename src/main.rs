@@ -4,7 +4,6 @@ mod screen;
 mod guards;
 mod error_helpers;
 
-use std::fs::read_dir;
 use std::io;
 use std::io::stdout;
 use std::time::{Duration};

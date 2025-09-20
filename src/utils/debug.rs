@@ -4,6 +4,7 @@ use crossterm::execute;
 use crossterm::style::Print;
 use crate::utils::tokenizer::TokenWithPos;
 
+#[allow(dead_code)]
 pub fn print_token_with_pos(token: Option<TokenWithPos>){
     let print_token = token.unwrap();
     execute!(
@@ -20,7 +21,7 @@ pub fn print_token_with_pos(token: Option<TokenWithPos>){
     ).unwrap();
 }
 
-
+#[allow(dead_code)]
 pub fn print_bool(b: bool){
     execute!(
         stdout(),

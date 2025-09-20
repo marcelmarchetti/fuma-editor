@@ -90,7 +90,7 @@ pub fn tokenize_text(wrapped_content: &String, wrap_ids: &Vec<usize>, print:bool
         token_print.push_str(&token_str);
     }
 
-    if(print && false){
+    if print && false {
         execute!(stdout(), MoveTo(0,55), Print(format!("Longitud: {}", wrapped_content.len()))).unwrap();
         execute!(stdout(), MoveTo(0,56), Print(format!("Palabras: {}", raw_word_count))).unwrap();
         execute!(stdout(), MoveTo(0,57), Print(format!("Tokens: {}", token_print ))).unwrap();

@@ -2,8 +2,6 @@
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
-use crossterm::style::Print;
-use crate::utils::debug::print_bool;
 use crate::utils::tokenizer::{TokenWithPos};
 use crate::utils::direction::Direction;
 
