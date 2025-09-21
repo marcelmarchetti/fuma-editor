@@ -4,7 +4,7 @@ use crossterm::cursor::{MoveTo, Show};
 use crossterm::{execute};
 use crossterm::style::Print;
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
-use crate::cursor::CursorPos;
+use crate::cursor::cursor::CursorPos;
 
 pub fn clean_screen() -> io::Result<()>{
     execute!(

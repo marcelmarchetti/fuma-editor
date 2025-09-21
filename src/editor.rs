@@ -2,7 +2,7 @@ use std::io;
 use std::time::Duration;
 use crossterm::event;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
-use crate::cursor::CursorPos;
+use crate::cursor::cursor::CursorPos;
 use crate::screen::draw_screen;
 use crate::utils::content_wrapper::{wrap_content, WrapResult};
 use crate::utils::direction::Direction;
@@ -97,11 +97,11 @@ fn handle_event(event: Event, state: &mut FumaState) -> io::Result<bool> {
             (KeyCode::Char('q'), KeyModifiers::CONTROL) => return Ok(false),
             (KeyCode::Up, _) if state.cursor.move_up() => state.redraw()?,
             (KeyCode::Down, _) if state.cursor.move_down() => state.redraw()?,
-            (KeyCode::Left, KeyModifiers::CONTROL) => state.cursor.move_token(Direction::Left),
-            (KeyCode::Right, KeyModifiers::CONTROL) => state.cursor.move_token(Direction::Right),
+            (KeyCode::Left, KeyModifiers::CONTROL) => state.cursor.move_by_token(Direction::Left),
+            (KeyCode::Right, KeyModifiers::CONTROL) => state.cursor.move_by_token(Direction::Right),
             (KeyCode::Left, _) =>state.cursor.move_left(),
             (KeyCode::Right, _) => state.cursor.move_right(),
-            (KeyCode::Home, _) => state.cursor.move_home(),
+            (KeyCode::Home, _) => state.cursor.move_start(),
             (KeyCode::End, _) => state.cursor.move_end(),
             (KeyCode::Char('t'), KeyModifiers::CONTROL) => _ = state.cursor.get_token_on_cursor(),
             (KeyCode::Char('t'), KeyModifiers::NONE) => state.tokenize_text()?,
