@@ -18,6 +18,8 @@ pub enum Action {
     MoveTokenRight,
     GetToken,
     TokenizeText,
+    MoveStartLine,
+    MoveEndLine,
 }
 
 pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifiers), Action> {
@@ -33,6 +35,8 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.move_token_right.main_key, config.move_token_right.modifier_key), Action::MoveTokenRight);
     map.insert((config.get_token.main_key, config.get_token.modifier_key), Action::GetToken);
     map.insert((config.tokenize_text.main_key, config.tokenize_text.modifier_key), Action::TokenizeText);
+    map.insert((config.move_start_line.main_key, config.move_start_line.modifier_key), Action::MoveStartLine);
+    map.insert((config.move_end_line.main_key, config.move_end_line.modifier_key), Action::MoveEndLine);
     map
 }
 
@@ -53,6 +57,8 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                     Action::MoveTokenRight => state.cursor.move_by_token(Direction::Right),
                     Action::GetToken => { _ = state.cursor.get_token_on_cursor(); },
                     Action::TokenizeText => state.tokenize_text()?,
+                    Action::MoveStartLine => if state.cursor.move_start_line() {state.redraw()? },
+                    Action::MoveEndLine =>  if state.cursor.move_end_line() {state.redraw()? },
                 }
             }
         }

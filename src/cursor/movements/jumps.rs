@@ -1,4 +1,5 @@
 use crate::cursor::cursor::CursorPos;
+use crate::utils::direction::Direction;
 
 impl CursorPos {
     pub fn move_start(&mut self) {
@@ -26,5 +27,28 @@ impl CursorPos {
             self.x = self.get_current_line_length();
             self.last_x = self.x;
         }
+    }
+
+    pub fn move_start_line(&mut self) -> bool {
+        self.x = 0;
+        self.last_x = self.x;
+        self.last_fast_right = true;
+        self.last_token = self.get_token(Direction::Left).unwrap();
+        self.ensure_visible()
+
+    }
+
+    pub fn move_end_line(&mut self) -> bool {
+        let mut count = 1;
+        while self.is_same_logical_line(self.y + count) {
+            count += 1;
+        }
+        self.y += count - 1;
+        self.x = self.get_current_line_length();
+        self.last_x = self.x;
+        self.last_fast_right = false;
+        self.last_token = self.get_token(Direction::Left).unwrap();
+        self.clamp_x_to_current_line();
+        self.ensure_visible()
     }
 }

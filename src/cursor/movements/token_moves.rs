@@ -21,7 +21,7 @@ impl CursorPos {
         None
     }
 
-    fn get_token(&mut self, direction: Direction) -> Option<TokenWithPos> {
+    pub fn get_token(&mut self, direction: Direction) -> Option<TokenWithPos> {
         let mut buffer: isize = 0;
         let current_wrap_id = self.wrap_ids.get(self.y).copied();
 

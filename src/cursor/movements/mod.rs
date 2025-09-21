@@ -1,3 +1,3 @@
 pub mod basic_moves;
-mod jumps;
-mod token_moves;
+pub mod jumps;
+pub mod token_moves;

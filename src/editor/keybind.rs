@@ -27,6 +27,8 @@ pub struct KeysConfiguration {
     pub move_token_right: KeyBind,
     pub get_token: KeyBind,
     pub tokenize_text: KeyBind,
+    pub move_start_line: KeyBind,
+    pub move_end_line: KeyBind,
 }
 
 impl Default for KeysConfiguration {
@@ -43,6 +45,8 @@ impl Default for KeysConfiguration {
             move_token_right: KeyBind::new(KeyCode::Right, KeyModifiers::CONTROL),
             get_token: KeyBind::new(KeyCode::Char('t'), KeyModifiers::CONTROL),
             tokenize_text: KeyBind::new(KeyCode::Char('t'), KeyModifiers::NONE),
+            move_start_line: KeyBind::new(KeyCode::Char('h'), KeyModifiers::CONTROL),
+            move_end_line: KeyBind::new(KeyCode::Char('l'), KeyModifiers::CONTROL),
         }
     }
 }
@@ -62,6 +66,8 @@ impl KeysConfiguration {
             move_token_right: parse_to_keybind("move_token_right", &json_file)?,
             get_token: parse_to_keybind("get_token", &json_file)?,
             tokenize_text: parse_to_keybind("tokenize_text", &json_file)?,
+            move_start_line: parse_to_keybind("move_start_line", &json_file)?,
+            move_end_line: parse_to_keybind("move_end_line", &json_file)?,
         })
     }
 }
