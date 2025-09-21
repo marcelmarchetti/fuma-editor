@@ -1,17 +1,21 @@
 use std::io;
 use std::time::Duration;
 use crossterm::event;
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crate::editor::fuma_state::FumaState;
-use crate::editor::keybind::{load_config, KeyBind, KeysConfiguration};
+use crate::editor::keybind::{load_config};
 use crate::editor::keymap::{build_keymap, handle_event};
-use crate::utils::direction::Direction;
+use crate::error_helpers::main_error_helper::{try_enable_raw_mode, try_enter_alternate_screen};
+use crate::guards::alt_screen_guard::AltScreenGuard;
 
 pub fn program_loop(contents: String) -> io::Result<()> {
     let keys_config = load_config()?;
     let keymap = build_keymap(&keys_config);
-
     let mut state = FumaState::new(contents)?;
+
+    try_enter_alternate_screen()?;
+    let _guard = AltScreenGuard;
+    try_enable_raw_mode()?;
+    
     state.redraw()?;
 
     loop {

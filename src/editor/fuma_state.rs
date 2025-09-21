@@ -1,11 +1,7 @@
 use std::io;
-use std::time::Duration;
-use crossterm::event;
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
 use crate::utils::content_wrapper::{wrap_content, WrapResult};
-use crate::utils::direction::Direction;
 use crate::utils::tokenizer::{tokenize_text, TokenWithPos};
 
 pub(crate) struct FumaState {

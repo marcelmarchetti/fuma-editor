@@ -145,19 +145,20 @@ fn parse_to_keybind (instruction_key: &str, config_file: &serde_json::Value) -> 
     ))
 }
 
+#[allow(dead_code)]
 pub fn test_config() -> io::Result<()> {
-    println!("🎯 Probando configuración de teclas...");
-    
+    println!("Testing key binding...");
+
     match load_config() {
         Ok(config) => {
-            println!("Configuración cargada exitosamente!");
-            println!("Tecla para salir: {:?}", config.quit);
-            println!("Tecla para mover arriba: {:?}", config.move_up);
-            return Ok(());
+            println!("Configuration loaded!");
+            println!("Exit key: {:?}", config.quit);
+            println!("Move up key: {:?}", config.move_up);
+            Ok(())
         },
         Err(e) => {
-            eprintln!("Error al cargar configuración: {}", e);
-            return Err(e);
+            eprintln!("Error loading configuration: {}", e);
+            Err(e)
         }
     }
 }

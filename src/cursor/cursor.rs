@@ -3,7 +3,6 @@ use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
 use crate::utils::tokenizer::{TokenWithPos};
-use crate::utils::direction::Direction;
 
 
 pub struct CursorPos {
