@@ -2,7 +2,7 @@ use std::io::stdout;
 use crossterm::cursor::Show;
 use crossterm::execute;
 use crossterm::terminal::{LeaveAlternateScreen};
-use crate::screen::clean_screen;
+use crate::editor::screen::clean_screen;
 
 pub struct AltScreenGuard;
 
