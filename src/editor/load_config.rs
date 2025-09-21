@@ -1,0 +1,164 @@
+use std::{fs, io};
+use crossterm::event::{KeyCode, KeyModifiers};
+
+#[derive(Debug)]
+pub struct KeyBind{
+    pub main_key: KeyCode,
+    pub modifier_key: KeyModifiers,
+}
+
+impl KeyBind{
+    pub fn new(main_key: KeyCode, modifier_key: KeyModifiers) -> Self{
+        Self {
+            main_key,
+            modifier_key
+        }
+    }
+}
+pub struct KeysConfiguration {
+    pub quit: KeyBind,
+    pub move_up: KeyBind,
+    pub move_down: KeyBind,
+    pub move_left: KeyBind,
+    pub move_right: KeyBind,
+    pub move_to_start: KeyBind,
+    pub move_to_end: KeyBind,
+    pub move_token_left: KeyBind,
+    pub move_token_right: KeyBind,
+    pub get_token: KeyBind,
+    pub tokenize_text: KeyBind,
+}
+
+impl Default for KeysConfiguration {
+    fn default() -> Self {
+        Self {
+            quit: KeyBind::new(KeyCode::Char('q'), KeyModifiers::CONTROL),
+            move_up: KeyBind::new(KeyCode::Up, KeyModifiers::NONE),
+            move_down: KeyBind::new(KeyCode::Down, KeyModifiers::NONE),
+            move_left: KeyBind::new(KeyCode::Left, KeyModifiers::NONE),
+            move_right: KeyBind::new(KeyCode::Right, KeyModifiers::NONE),
+            move_to_start: KeyBind::new(KeyCode::Home, KeyModifiers::NONE),
+            move_to_end: KeyBind::new(KeyCode::End, KeyModifiers::NONE),
+            move_token_left: KeyBind::new(KeyCode::Left, KeyModifiers::CONTROL),
+            move_token_right: KeyBind::new(KeyCode::Right, KeyModifiers::CONTROL),
+            get_token: KeyBind::new(KeyCode::Char('t'), KeyModifiers::CONTROL),
+            tokenize_text: KeyBind::new(KeyCode::Char('t'), KeyModifiers::NONE),
+        }
+    }
+}
+
+
+impl KeysConfiguration {
+    fn new(json_file: serde_json::Value) -> io::Result<Self> {
+        Ok(Self {
+            quit: parse_to_keybind("quit", &json_file)?,
+            move_up: parse_to_keybind("move_up", &json_file)?,
+            move_down: parse_to_keybind("move_down", &json_file)?,
+            move_left: parse_to_keybind("move_left", &json_file)?,
+            move_right: parse_to_keybind("move_right", &json_file)?,
+            move_to_start: parse_to_keybind("move_to_start", &json_file)?,
+            move_to_end: parse_to_keybind("move_to_end", &json_file)?,
+            move_token_left: parse_to_keybind("move_token_left", &json_file)?,
+            move_token_right: parse_to_keybind("move_token_right", &json_file)?,
+            get_token: parse_to_keybind("get_token", &json_file)?,
+            tokenize_text: parse_to_keybind("tokenize_text", &json_file)?,
+        })
+    }
+}
+
+
+pub fn load_config() -> io::Result<KeysConfiguration> {
+    let conf_file = fs::File::open("config.json");
+
+    match conf_file {
+        Ok(file) => {
+            let json: serde_json::Value = match serde_json::from_reader(file) {
+                Ok(val) => val,
+                Err(e) => {
+                    eprintln!("Invalid config file ({}), using default keybinds", e);
+                    return Ok(KeysConfiguration::default());
+                }
+            };
+
+            match KeysConfiguration::new(json) {
+                Ok(cfg) => Ok(cfg),
+                Err(e) => {
+                    eprintln!("Invalid config file ({}), using default keybinds", e);
+                    Ok(KeysConfiguration::default())
+                }
+            }
+        }
+        Err(_) => {
+            eprintln!("config.json not found , using default keybinds");
+            Ok(KeysConfiguration::default())
+        }
+    }
+}
+
+
+fn parse_to_keybind (instruction_key: &str, config_file: &serde_json::Value) -> io::Result<KeyBind>  {
+    let raw_bind = config_file[instruction_key].as_str().ok_or_else(||
+        io::Error::new(io::ErrorKind::InvalidInput, format!("key '{}' not found or not a string in config", instruction_key)
+    ))?.to_string();
+
+    let normalized_raw_bind =  raw_bind.to_lowercase();
+    let binds:Vec<&str> = normalized_raw_bind.split(' ').collect();
+
+    let mut main_key: KeyCode = KeyCode::Null;
+    let mut modifier_key = KeyModifiers::NONE;
+
+    if binds.len() > 3 {
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("too many arguments on '{}' key bind", raw_bind)));
+    }
+
+    for key in binds {
+        match key {
+            "control" => modifier_key = KeyModifiers::CONTROL,
+            "shift" => modifier_key = KeyModifiers::SHIFT,
+            "alt" => modifier_key = KeyModifiers::ALT,
+            "up" => main_key = KeyCode::Up,
+            "down" => main_key = KeyCode::Down,
+            "left" => main_key = KeyCode::Left,
+            "right" => main_key = KeyCode::Right,
+            "home" => main_key = KeyCode::Home,
+            "end" => main_key = KeyCode::End,
+            _ => {
+                if key.chars().count() == 1 {
+                    main_key = KeyCode::Char(key.chars().next().ok_or_else(|| io::Error::new(
+                        io::ErrorKind::InvalidInput, format!("invalid character in '{}'", key)
+                    ))?
+                    );
+                } else {
+                    return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("too many characters on '{}' in '{}'", main_key, raw_bind)));
+                }
+            }
+        }
+    }
+
+    if main_key == KeyCode::Null {
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("no main key in '{}'", raw_bind)))
+    }
+
+    Ok(KeyBind::new(
+        main_key,
+        modifier_key
+    ))
+}
+
+pub fn test_config() -> io::Result<()> {
+    println!("🎯 Probando configuración de teclas...");
+
+    // Test 1: Cargar configuración
+    match load_config() {
+        Ok(config) => {
+            println!("Configuración cargada exitosamente!");
+            println!("Tecla para salir: {:?}", config.quit);
+            println!("Tecla para mover arriba: {:?}", config.move_up);
+            return Ok(());
+        },
+        Err(e) => {
+            eprintln!("Error al cargar configuración: {}", e);
+            return Err(e);
+        }
+    }
+}

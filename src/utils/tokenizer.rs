@@ -195,7 +195,7 @@ pub fn map_tokens(content: &String, tokens: Vec<Token>, print: bool) -> Vec<Toke
                 }
             }
         }
-        execute!(stdout(), MoveTo(0,57), Print(format!("Tokens: {}", tokens_print ))).unwrap();
+        execute!(stdout(), MoveTo(0,58), Print(format!("Tokens: {}", tokens_print ))).unwrap();
     }
 
     tokens_with_pos
