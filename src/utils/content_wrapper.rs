@@ -2,32 +2,49 @@ pub struct WrapResult {
     pub wrapped_text: String,
     pub wrap_ids: Vec<usize>,
 }
+
 pub fn wrap_content(content: &str, width: usize) -> WrapResult {
     let effective_width = width.saturating_sub(2).max(1);
 
-    let mut result = Vec::new();
+    let mut wrapped_text = String::new();
     let mut wrap_ids = Vec::new();
 
     for (logical_idx, line) in content.lines().enumerate() {
-        let mut remaining = line;
-
-        while !remaining.is_empty() {
-            let chunk: String = remaining.chars().take(effective_width).collect();
-            let byte_len = chunk.len();
-            remaining = &remaining[byte_len..];
-
-            result.push(chunk);
+        if line.is_empty() {
+            wrapped_text.push('\n');
             wrap_ids.push(logical_idx);
+            continue;
         }
 
-        if line.is_empty() {
-            result.push(String::new());
+        let mut start = 0;
+        let mut count = 0;
+
+        for (i, ch) in line.char_indices() {
+            count += 1;
+
+            if count == effective_width {
+                wrapped_text.push_str(&line[start..=i]);
+                wrapped_text.push('\n');
+                wrap_ids.push(logical_idx);
+
+                start = i + ch.len_utf8();
+                count = 0;
+            }
+        }
+
+        if start < line.len() {
+            wrapped_text.push_str(&line[start..]);
+            wrapped_text.push('\n');
             wrap_ids.push(logical_idx);
         }
     }
 
+    if wrapped_text.ends_with('\n') {
+        wrapped_text.pop();
+    }
+
     WrapResult {
-        wrapped_text: result.join("\n"),
+        wrapped_text,
         wrap_ids,
     }
 }
