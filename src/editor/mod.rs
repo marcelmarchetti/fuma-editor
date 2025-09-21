@@ -1,4 +1,5 @@
 pub mod fuma_state;
 pub mod screen;
 pub mod program;
-pub mod load_config;
+pub mod keybind;
+mod keymap;

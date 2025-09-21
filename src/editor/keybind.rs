@@ -147,8 +147,7 @@ fn parse_to_keybind (instruction_key: &str, config_file: &serde_json::Value) -> 
 
 pub fn test_config() -> io::Result<()> {
     println!("🎯 Probando configuración de teclas...");
-
-    // Test 1: Cargar configuración
+    
     match load_config() {
         Ok(config) => {
             println!("Configuración cargada exitosamente!");

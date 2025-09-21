@@ -1,0 +1,62 @@
+use std::collections::HashMap;
+use std::io;
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crate::editor::fuma_state::FumaState;
+use crate::editor::keybind::KeysConfiguration;
+use crate::utils::direction::Direction;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Action {
+    Quit,
+    MoveUp,
+    MoveDown,
+    MoveLeft,
+    MoveRight,
+    MoveToStart,
+    MoveToEnd,
+    MoveTokenLeft,
+    MoveTokenRight,
+    GetToken,
+    TokenizeText,
+}
+
+pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifiers), Action> {
+    let mut map = HashMap::new();
+    map.insert((config.quit.main_key, config.quit.modifier_key), Action::Quit);
+    map.insert((config.move_up.main_key, config.move_up.modifier_key), Action::MoveUp);
+    map.insert((config.move_down.main_key, config.move_down.modifier_key), Action::MoveDown);
+    map.insert((config.move_left.main_key, config.move_left.modifier_key), Action::MoveLeft);
+    map.insert((config.move_right.main_key, config.move_right.modifier_key), Action::MoveRight);
+    map.insert((config.move_to_start.main_key, config.move_to_start.modifier_key), Action::MoveToStart);
+    map.insert((config.move_to_end.main_key, config.move_to_end.modifier_key), Action::MoveToEnd);
+    map.insert((config.move_token_left.main_key, config.move_token_left.modifier_key), Action::MoveTokenLeft);
+    map.insert((config.move_token_right.main_key, config.move_token_right.modifier_key), Action::MoveTokenRight);
+    map.insert((config.get_token.main_key, config.get_token.modifier_key), Action::GetToken);
+    map.insert((config.tokenize_text.main_key, config.tokenize_text.modifier_key), Action::TokenizeText);
+    map
+}
+
+pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>) -> io::Result<bool> {
+    match event {
+        Event::Resize(cols, _) => state.resize_console(cols)?,
+        Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => {
+            if let Some(action) = keymap.get(&(code, modifiers)) {
+                match action {
+                    Action::Quit => return Ok(false),
+                    Action::MoveUp => if state.cursor.move_up() { state.redraw()?; },
+                    Action::MoveDown => if state.cursor.move_down() { state.redraw()?; },
+                    Action::MoveLeft => state.cursor.move_left(),
+                    Action::MoveRight => state.cursor.move_right(),
+                    Action::MoveToStart => state.cursor.move_start(),
+                    Action::MoveToEnd => state.cursor.move_end(),
+                    Action::MoveTokenLeft => state.cursor.move_by_token(Direction::Left),
+                    Action::MoveTokenRight => state.cursor.move_by_token(Direction::Right),
+                    Action::GetToken => { _ = state.cursor.get_token_on_cursor(); },
+                    Action::TokenizeText => state.tokenize_text()?,
+                }
+            }
+        }
+        _ => {}
+    }
+    Ok(true)
+}
