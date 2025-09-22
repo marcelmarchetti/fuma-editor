@@ -42,7 +42,7 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
 
 pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>) -> io::Result<bool> {
     match event {
-        Event::Resize(cols, _) => state.resize_console(cols)?,
+        Event::Resize(cols, _) => state.resize_console()?,
         Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => {
             if let Some(action) = keymap.get(&(code, modifiers)) {
                 match action {
@@ -59,6 +59,17 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                     Action::TokenizeText => state.tokenize_text()?,
                     Action::MoveStartLine => if state.cursor.move_start_line() {state.redraw()? },
                     Action::MoveEndLine =>  if state.cursor.move_end_line() {state.redraw()? },
+                }
+            } else if let KeyCode::Char(c) = code {
+                if modifiers.is_empty() || modifiers==KeyModifiers::NONE {
+                    state.insert_char(c)?;
+                }
+            } else {
+                match code {
+                    KeyCode::Enter => state.insert_newline()?,
+                    KeyCode::Backspace => state.backspace()?,
+                    KeyCode::Delete => state.delete()?,
+                    _ => {}
                 }
             }
         }

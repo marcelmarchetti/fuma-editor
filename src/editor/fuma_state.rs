@@ -1,38 +1,40 @@
 use std::io;
 use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
+use crate::editor::text_buffer::TextBuffer;
 use crate::utils::content_wrapper::{wrap_content, WrapResult};
 use crate::utils::tokenizer::{tokenize_text, TokenWithPos};
 
 pub(crate) struct FumaState {
-    pub(crate) cursor: CursorPos,
-    wrap_result: WrapResult,
-    contents: String,
-    tokenized_words: Vec<TokenWithPos>
+    pub cursor: CursorPos,
+    pub wrap_result: WrapResult,
+    pub buffer: TextBuffer,
+    pub tokenized_words: Vec<TokenWithPos>
 }
 
 impl FumaState {
     pub(crate) fn new(contents: String) -> io::Result<Self> {
+        let buffer = TextBuffer::from_string(contents);
         let (terminal_cols, _) = crossterm::terminal::size()?;
-        let wrap_result = wrap_content(&contents, terminal_cols as usize);
+        let wrap_result = wrap_content(&buffer.to_string(), terminal_cols as usize);
         let tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, false);
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
 
         Ok(Self {
             cursor,
             wrap_result,
-            contents,
+            buffer,
             tokenized_words,
         })
     }
 
-    pub(crate) fn redraw(&mut self) -> io::Result<()> {
-        draw_screen(&self.wrap_result.wrapped_text, &self.cursor)?;
+    pub(crate) fn redraw(&self) -> io::Result<()> {
+        draw_screen(self)?;
         Ok(())
     }
 
     pub(crate) fn redraw_and_refresh(&mut self) -> io::Result<()> {
-        draw_screen(&self.wrap_result.wrapped_text, &self.cursor)?;
+        draw_screen(self)?;
         self.cursor.refresh()?;
         Ok(())
     }
@@ -48,11 +50,12 @@ impl FumaState {
     }
 
     fn wrap_content(&mut self, cols: u16) -> io::Result<()> {
-        self.wrap_result = wrap_content(&self.contents, cols as usize);
+        self.wrap_result = wrap_content(&self.buffer.to_string(), cols as usize);
         Ok(())
     }
-    pub(crate) fn resize_console(&mut self, columns: u16) -> io::Result<()> {
-        self.wrap_content(columns)?;
+    pub(crate) fn resize_console(&mut self) -> io::Result<()> {
+        let (terminal_cols, _) = crossterm::terminal::size()?;
+        self.wrap_content(terminal_cols)?;
         let old_cursor_state = (self.cursor.x, self.cursor.y, self.cursor.last_x, self.cursor.vertical_offset);
         self.tokenize_text()?;
         self.new_cursor_pos()?;

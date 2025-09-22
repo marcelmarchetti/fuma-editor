@@ -1,10 +1,11 @@
 ﻿use std::io;
-use std::io::{stdout};
+use std::io::{stdout, BufRead};
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::{execute};
 use crossterm::style::Print;
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
 use crate::cursor::cursor::CursorPos;
+use crate::editor::fuma_state::FumaState;
 
 pub fn clean_screen() -> io::Result<()>{
     execute!(
@@ -18,7 +19,7 @@ pub fn clean_screen() -> io::Result<()>{
 }
 
 
-pub fn draw_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
+pub fn draw_screen(state: &FumaState) -> io::Result<()> {
     let (_, terminal_rows) = size()?;
     
     execute!(stdout(), crossterm::cursor::Hide)?;
@@ -29,8 +30,8 @@ pub fn draw_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
         Clear(ClearType::All),
     )?;
 
-    let lines: Vec<&str> = contents.lines().collect();
-    let start = cursor.vertical_offset;
+    let lines: Vec<String> = state.buffer.lines.clone();
+    let start = state.cursor.vertical_offset;
     let end = (start + terminal_rows as usize).min(lines.len());
     
     for (i, line) in lines[start..end].iter().enumerate() {
@@ -39,7 +40,7 @@ pub fn draw_screen(contents: &str, cursor: &CursorPos) -> io::Result<()> {
     
     execute!(
         stdout(),
-        MoveTo(cursor.x as u16, (cursor.y - cursor.vertical_offset) as u16),
+        MoveTo(state.cursor.x as u16, (state.cursor.y - state.cursor.vertical_offset) as u16),
         Show,
         EndSynchronizedUpdate
     )?;
