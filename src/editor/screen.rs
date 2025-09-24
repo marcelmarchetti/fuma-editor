@@ -33,9 +33,21 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
     let lines: Vec<String> = state.wrap_result.wrapped_text.clone();
     let start = state.cursor.vertical_offset;
     let end = (start + terminal_rows as usize).min(lines.len());
-    
+
+    let index_spacing: u16 = (lines.len() as u16).to_string().len() as u16 + 1;
+
+    let mut first_line = true;
+    let mut last_wrapped_inx = 0;
+
     for (i, line) in lines[start..end].iter().enumerate() {
-        execute!(stdout(), MoveTo(0, i as u16), Print(line))?;
+
+        if last_wrapped_inx != state.wrap_result.wrap_ids[start + i] || first_line {
+            last_wrapped_inx = state.wrap_result.wrap_ids[start + i];
+            first_line = false;
+            execute!(stdout(), MoveTo(0, i as u16), Print(state.wrap_result.wrap_ids[start + i]))?;
+        }
+
+        execute!(stdout(), MoveTo(index_spacing, i as u16), Print(line))?;
     }
     
     execute!(
