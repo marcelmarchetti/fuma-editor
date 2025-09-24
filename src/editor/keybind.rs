@@ -1,5 +1,6 @@
 use std::{fs, io};
 use crossterm::event::{KeyCode, KeyModifiers};
+use crate::{log_debug, log_error};
 
 #[derive(Debug)]
 pub struct KeyBind{
@@ -81,7 +82,7 @@ pub fn load_config() -> io::Result<KeysConfiguration> {
             let json: serde_json::Value = match serde_json::from_reader(file) {
                 Ok(val) => val,
                 Err(e) => {
-                    eprintln!("Invalid config file ({}), using default keybinds", e);
+                    log_error!("Invalid config file ({}), using default keybinds", e);
                     return Ok(KeysConfiguration::default());
                 }
             };
@@ -89,13 +90,13 @@ pub fn load_config() -> io::Result<KeysConfiguration> {
             match KeysConfiguration::new(json) {
                 Ok(cfg) => Ok(cfg),
                 Err(e) => {
-                    eprintln!("Invalid config file ({}), using default keybinds", e);
+                    log_error!("Invalid config file ({}), using default keybinds", e);
                     Ok(KeysConfiguration::default())
                 }
             }
         }
         Err(_) => {
-            eprintln!("config.json not found , using default keybinds");
+            log_error!("config.json not found , using default keybinds");
             Ok(KeysConfiguration::default())
         }
     }
@@ -104,8 +105,10 @@ pub fn load_config() -> io::Result<KeysConfiguration> {
 
 fn parse_to_keybind (instruction_key: &str, config_file: &serde_json::Value) -> io::Result<KeyBind>  {
     let raw_bind = config_file[instruction_key].as_str().ok_or_else(||
-        io::Error::new(io::ErrorKind::InvalidInput, format!("key '{}' not found or not a string in config", instruction_key)
-    ))?.to_string();
+        {
+            log_error!("Invalid config file ({}), using default keybinds", instruction_key);
+            io::Error::new(io::ErrorKind::InvalidInput, format!("key '{}' not found or not a string in config", instruction_key))
+        })?.to_string();
 
     let normalized_raw_bind =  raw_bind.to_lowercase();
     let binds:Vec<&str> = normalized_raw_bind.split(' ').collect();
@@ -114,6 +117,7 @@ fn parse_to_keybind (instruction_key: &str, config_file: &serde_json::Value) -> 
     let mut modifier_key = KeyModifiers::NONE;
 
     if binds.len() > 3 {
+        log_error!("too many arguments on '{}' key bind", raw_bind);
         return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("too many arguments on '{}' key bind", raw_bind)));
     }
 
@@ -130,18 +134,22 @@ fn parse_to_keybind (instruction_key: &str, config_file: &serde_json::Value) -> 
             "end" => main_key = KeyCode::End,
             _ => {
                 if key.chars().count() == 1 {
-                    main_key = KeyCode::Char(key.chars().next().ok_or_else(|| io::Error::new(
-                        io::ErrorKind::InvalidInput, format!("invalid character in '{}'", key)
-                    ))?
+                    main_key = KeyCode::Char(key.chars().next().ok_or_else(|| {
+                        log_error!("Invalid character in '{}'", key);
+                        io::Error::new(io::ErrorKind::InvalidInput, format!("Invalid character in '{}'", key),
+                        )
+                    })?
                     );
                 } else {
-                    return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("too many characters on '{}' in '{}'", main_key, raw_bind)));
+                    log_error!("Too many characters on '{}' in '{}'", main_key, raw_bind);
+                    return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("Too many characters on '{}' in '{}'", main_key, raw_bind)));
                 }
             }
         }
     }
 
     if main_key == KeyCode::Null {
+        log_error!("no main key in '{}'", raw_bind);
         return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("no main key in '{}'", raw_bind)))
     }
 
@@ -153,17 +161,17 @@ fn parse_to_keybind (instruction_key: &str, config_file: &serde_json::Value) -> 
 
 #[allow(dead_code)]
 pub fn test_config() -> io::Result<()> {
-    println!("Testing key binding...");
+    log_debug!("Testing key binding...");
 
     match load_config() {
         Ok(config) => {
-            println!("Configuration loaded!");
-            println!("Exit key: {:?}", config.quit);
-            println!("Move up key: {:?}", config.move_up);
+            log_debug!("Configuration loaded!");
+            log_debug!("Exit key: {:?}", config.quit);
+            log_debug!("Move up key: {:?}", config.move_up);
             Ok(())
         },
         Err(e) => {
-            eprintln!("Error loading configuration: {}", e);
+            log_error!("Error loading configuration: {}", e);
             Err(e)
         }
     }

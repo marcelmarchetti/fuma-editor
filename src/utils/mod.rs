@@ -4,3 +4,4 @@ pub mod content_wrapper;
 pub mod tokenizer;
 pub mod direction;
 pub mod debug;
+pub mod logger;

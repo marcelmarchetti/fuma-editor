@@ -2,18 +2,7 @@ use std::io;
 use crate::cursor::cursor::CursorPos;
 
 impl CursorPos {
-
-    pub fn insert_char(&mut self) -> io::Result<()>{
-        let (cols, _) = crossterm::terminal::size()?;
-        if cols < self.x as u16 + 1 {
-            self.x = 1;
-            self.y += 1;
-        } else {
-            self.x += 1;
-        }
-        self.last_x = self.x;
-        Ok(())
-    }
+    
     pub fn move_up(&mut self) -> bool {
         if self.y > 0 {
             self.y -= 1;

@@ -49,7 +49,7 @@ impl TextBuffer {
     pub fn backspace(&mut self, line: usize, col: usize) {
         if line < self.lines.len() {
             if col > 0 {
-                self.lines[line].remove(col - 1);
+                self.lines[line].remove(col.saturating_sub(1));
             } else if line > 0 {
                 let removed = self.lines.remove(line);
                 let prev_line = &mut self.lines[line - 1];

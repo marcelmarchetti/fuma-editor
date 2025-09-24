@@ -1,4 +1,5 @@
 use std::io;
+use crate::constants::values::{DEBUG_TOKENIZER, DEBUG_WRAPPING};
 use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
 use crate::editor::text_buffer::TextBuffer;
@@ -14,10 +15,11 @@ pub(crate) struct FumaState {
 
 impl FumaState {
     pub(crate) fn new(contents: String) -> io::Result<Self> {
+        
+        
         let buffer = TextBuffer::from_string(contents);
-        let (terminal_cols, _) = crossterm::terminal::size()?;
-        let wrap_result = wrap_content(&buffer.to_string(), terminal_cols as usize);
-        let tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, false);
+        let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING)?;
+        let tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, DEBUG_TOKENIZER);
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
 
         Ok(Self {
@@ -40,7 +42,7 @@ impl FumaState {
     }
 
     pub(crate) fn tokenize_text(&mut self) -> io::Result<()> {
-        self.tokenized_words = tokenize_text(&self.wrap_result.wrapped_text, &self.wrap_result.wrap_ids, false);
+        self.tokenized_words = tokenize_text(&self.wrap_result.wrapped_text, &self.wrap_result.wrap_ids, DEBUG_TOKENIZER);
 
         Ok(())
     }
@@ -49,13 +51,12 @@ impl FumaState {
         Ok(())
     }
 
-    fn wrap_content(&mut self, cols: u16) -> io::Result<()> {
-        self.wrap_result = wrap_content(&self.buffer.to_string(), cols as usize);
+    pub(crate) fn wrap_content(&mut self) -> io::Result<()> {
+        self.wrap_result = wrap_content(&self.buffer.to_string(),  DEBUG_WRAPPING)?;
         Ok(())
     }
     pub(crate) fn resize_console(&mut self) -> io::Result<()> {
-        let (terminal_cols, _) = crossterm::terminal::size()?;
-        self.wrap_content(terminal_cols)?;
+        self.wrap_content()?;
         let old_cursor_state = (self.cursor.x, self.cursor.y, self.cursor.last_x, self.cursor.vertical_offset);
         self.tokenize_text()?;
         self.new_cursor_pos()?;

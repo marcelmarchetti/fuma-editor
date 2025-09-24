@@ -1,29 +1,23 @@
 use std::io;
+use std::ops::Index;
+use crate::constants::values::TERMINAL_RIGHT_MARGIN;
 use crate::editor::fuma_state::FumaState;
 
 impl FumaState {
-
     pub fn insert_char(&mut self, c: char) -> io::Result<()> {
-        let (cols, _) = crossterm::terminal::size()?;
-        let max_width = cols as usize;
+        let (cols, _) = crossterm::terminal::size().unwrap();
+        let (logical_line, logical_column) = self.wrap_result.get_logical_position(self.cursor.y, self.cursor.x)?;
 
-        let (line, col) = (self.cursor.y, self.cursor.x);
-
-        if self.cursor.get_current_line_length() >= max_width - 2 {
-            if self.cursor.x + 1 < max_width - 2 {
-                self.cursor.x += 1;
-                self.buffer.insert_char(line, col, c);
-            }
-            self.buffer.insert_newline(line, col);
-            self.cursor.y += 1;
-            self.cursor.x = 0;
-            self.buffer.insert_char(self.cursor.y, self.cursor.x, c);
-            self.cursor.x += 1;
-        } else {
-            self.buffer.insert_char(line, col, c);
-            self.cursor.x += 1;
-        }
+        self.buffer.insert_char(logical_line, logical_column, c);
+        self.cursor.x += 1;
         self.cursor.last_x = self.cursor.x;
+
+        if self.cursor.x >= cols as usize - TERMINAL_RIGHT_MARGIN{
+            self.cursor.x = 1;
+            self.cursor.y += 1;
+        }
+
+
         self.resize_console()?;
         Ok(())
     }

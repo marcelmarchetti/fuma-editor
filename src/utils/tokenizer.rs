@@ -1,8 +1,5 @@
 use std::fmt;
-use std::io::stdout;
-use crossterm::cursor::MoveTo;
-use crossterm::execute;
-use crossterm::style::Print;
+use crate::utils::debug::{print_token_mapping_result, print_tokenize_result};
 
 #[derive(Clone, Debug)]
 pub enum TokenType{
@@ -44,7 +41,7 @@ fn generate_token(value: &String, id: usize,  token_type: TokenType) -> Token {
     }
 }
 
-pub fn tokenize_text(wrapped_content: &String, wrap_ids: &Vec<usize>, print:bool) -> Vec<TokenWithPos>{
+pub fn tokenize_text(wrapped_content: &String, wrap_ids: &Vec<usize>, debug:bool) -> Vec<TokenWithPos>{
     let mut tokens: Vec<Token> = Vec::new();
     let mut token_buffer: String = String::new();
     let mut row_index:usize = 0;
@@ -82,23 +79,14 @@ pub fn tokenize_text(wrapped_content: &String, wrap_ids: &Vec<usize>, print:bool
         tokens.push(generate_token(&token_buffer, tokens.len(), TokenType::Word));
     }
     
-    let raw_word_count = wrapped_content.split_whitespace().count();
-    let mut token_print: String = "".to_string();
-    for token in &tokens {
-        if token_print.len() > 2000 {break;}
-        let token_str = format!("{} {} {} Ø ", token.id, token.value, token.token_type);
-        token_print.push_str(&token_str);
+    if debug {
+        print_tokenize_result(wrapped_content, &tokens);
     }
-
-    if print && false {
-        execute!(stdout(), MoveTo(0,55), Print(format!("Longitud: {}", wrapped_content.len()))).unwrap();
-        execute!(stdout(), MoveTo(0,56), Print(format!("Palabras: {}", raw_word_count))).unwrap();
-        execute!(stdout(), MoveTo(0,57), Print(format!("Tokens: {}", token_print ))).unwrap();
-    }
-    map_tokens(wrapped_content, tokens, print)
+    
+    map_tokens(wrapped_content, tokens, debug)
 }
 
-pub fn map_tokens(content: &String, tokens: Vec<Token>, print: bool) -> Vec<TokenWithPos> {
+pub fn map_tokens(content: &String, tokens: Vec<Token>, debug: bool) -> Vec<TokenWithPos> {
     let mut token_index = 0;
     let mut tokens_with_pos: Vec<TokenWithPos> = Vec::new();
     let lines: Vec<&str> = content.lines().collect();
@@ -180,22 +168,8 @@ pub fn map_tokens(content: &String, tokens: Vec<Token>, print: bool) -> Vec<Toke
         }
     }
 
-    if print {
-        let mut tokens_print: String = "".to_string();
-        for token in &tokens_with_pos {
-            if token.row_start < Some(3) {
-                if let Some(t) = &token.token {
-                    let token_str = format!(" {} {} {} || y1: {} y2: {} x1: {} x2:{} Ø ",
-                                            t.id, t.value, t.token_type,
-                                            token.row_start.unwrap(),
-                                            token.row_end.unwrap(),
-                                            token.col_start.unwrap(),
-                                            token.col_end.unwrap());
-                    tokens_print.push_str(&token_str);
-                }
-            }
-        }
-        execute!(stdout(), MoveTo(0,58), Print(format!("Tokens: {}", tokens_print ))).unwrap();
+    if debug {
+        print_token_mapping_result(&tokens_with_pos);
     }
 
     tokens_with_pos

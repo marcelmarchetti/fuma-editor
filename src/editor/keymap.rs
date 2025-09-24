@@ -64,7 +64,8 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                 if modifiers.is_empty() || modifiers==KeyModifiers::NONE {
                     state.insert_char(c)?;
                 }
-            } else {
+            }
+            else {
                 match code {
                     KeyCode::Enter => state.insert_newline()?,
                     KeyCode::Backspace => state.backspace()?,

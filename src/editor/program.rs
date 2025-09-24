@@ -1,22 +1,28 @@
 use std::io;
 use std::time::Duration;
-use crossterm::event;
+use crossterm::{event};
 use crate::editor::fuma_state::FumaState;
 use crate::editor::keybind::{load_config};
 use crate::editor::keymap::{build_keymap, handle_event};
 use crate::error_helpers::main_error_helper::{try_enable_raw_mode, try_enter_alternate_screen};
 use crate::guards::alt_screen_guard::AltScreenGuard;
+use crate::{log_error, log_info};
 
 pub fn program_loop(contents: String) -> io::Result<()> {
+    log_info!("Preparing to run the program");
+
+
     let keys_config = load_config()?;
     let keymap = build_keymap(&keys_config);
     let mut state = FumaState::new(contents)?;
 
     try_enter_alternate_screen()?;
-    let _guard = AltScreenGuard;
+    let guard = AltScreenGuard;
     try_enable_raw_mode()?;
     
     state.redraw()?;
+
+    log_info!("Loop started");
 
     loop {
         if event::poll(Duration::from_millis(16))? {
@@ -25,11 +31,10 @@ pub fn program_loop(contents: String) -> io::Result<()> {
                 break;
             }
             if let Err(e) =  state.cursor.refresh() {
-                eprintln!("Failed to refresh cursor: {}", e);
+                log_error!("Error: {}", e);
                 if let Err(e) = state.redraw_and_refresh() {
-                    eprintln!("Failed to draw screen: {}", e);
-                    eprintln!("Critical error, closing fuma editor: {}", e);
-                    return Err(e)
+                    log_error!("Error: {}", e);
+                    return Err(e);
                 }
             }
         }

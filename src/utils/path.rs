@@ -1,6 +1,7 @@
 ﻿use std::env;
 use crossterm::terminal::disable_raw_mode;
 use regex::Regex;
+use crate::log_error;
 
 pub fn get_route() -> String {
     let args: Vec<String> = env::args().collect();
@@ -33,13 +34,13 @@ pub fn get_route() -> String {
 fn valid_arguments(args: &Vec<String>) {
     if args.len() < 2 {
         disable_raw_mode().unwrap();
-        eprintln!("Error! No path specified.");
+        log_error!("Error! No path specified.");
         std::process::exit(0)
     }
 
     if args.len() > 2 {
         disable_raw_mode().unwrap();
-        eprintln!("Error! Can't enter more than one argument.");
+        log_error!("Error! Can't enter more than one argument.");
         std::process::exit(0)
     }
 }
