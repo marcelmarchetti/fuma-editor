@@ -19,8 +19,8 @@ pub struct CursorPos {
 }
 
 impl CursorPos {
-    pub fn new(contents: &str, wrap_ids: Vec<usize>, tokenized_words: Vec<TokenWithPos>) -> Self {
-        let lines: Vec<&str> = contents.lines().collect();
+    pub fn new(contents: &Vec<String>, wrap_ids: Vec<usize>, tokenized_words: Vec<TokenWithPos>) -> Self {
+        let lines: &Vec<String> = contents;
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
         let last_token = tokenized_words[0].clone();

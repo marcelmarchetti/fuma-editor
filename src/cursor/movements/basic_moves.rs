@@ -21,7 +21,7 @@ impl CursorPos {
         false
     }
     pub fn move_right(&mut self) {
-        let max_x = self.get_current_line_length();
+        let max_x = self.get_current_line_length() + 1;
 
         if self.x + 1 <= max_x {
             if self.x + 1 == max_x && self.is_same_logical_line(self.y + 1) {
@@ -45,7 +45,7 @@ impl CursorPos {
             self.last_x = self.x;
         } else if self.y > 0 && self.is_same_logical_line(self.y - 1) {
             self.y -= 1;
-            self.x = self.get_current_line_length().saturating_sub(1);
+            self.x = self.get_current_line_length();
             self.last_x = self.x;
         }
     }

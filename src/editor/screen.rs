@@ -30,7 +30,7 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
         Clear(ClearType::All),
     )?;
 
-    let lines: Vec<String> = state.buffer.lines.clone();
+    let lines: Vec<String> = state.wrap_result.wrapped_text.clone();
     let start = state.cursor.vertical_offset;
     let end = (start + terminal_rows as usize).min(lines.len());
     

@@ -5,56 +5,76 @@ use crate::log_error;
 use crate::utils::debug::print_wrapper_values;
 
 pub struct WrapResult {
-    pub wrapped_text: String,
+    pub wrapped_text: Vec<String>,
     pub wrap_ids: Vec<usize>,
 }
 
 impl WrapResult {
-    pub fn get_line(&mut self, row: usize) -> io::Result<&str> {
-        Ok(self.wrapped_text.lines().nth(row).ok_or({
+    pub fn get_line(&self, row: usize) -> io::Result<&str> {
+        self.wrapped_text.get(row).map(|s| s.as_str()).ok_or_else(|| {
             log_error!("Wrapped row not found");
             io::Error::new(io::ErrorKind::NotFound, "Wrapped row not found")
-        })?)
+        })
     }
-
-    pub fn get_wrapped_info(&mut self, wrapped_y: usize) -> io::Result<(usize, usize)> {
-        if wrapped_y >= self.wrap_ids.len(){
-            log_error!("Wrapped row out of bounds");
-            return Err(io::Error::new(io::ErrorKind::NotFound, "Wrapped row out of bounds"))
-        }
-        let mut number_of_lines = 0;
-        let mut first_line_with_logical_id = 0;
-        for (inx, id) in self.wrap_ids.iter().enumerate(){
-            if id == &wrapped_y {
-                if number_of_lines == 0{
-                    first_line_with_logical_id = inx;
-                }
-                number_of_lines += 1;
-            }
-        }
-        if number_of_lines == 0 {
-            log_error!("Logical ID not found in wrapped lines");
-            return Err(io::Error::new(io::ErrorKind::NotFound, "Logical ID not found in wrapped lines"));
-        }
-        Ok((number_of_lines, first_line_with_logical_id))
-    }
-
+    
     pub fn get_logical_position(&mut self, wrapped_y: usize, wrapped_x: usize) -> io::Result<(usize, usize)> {
-        let (number_of_wrapped_lines, first_line_with_logical_id) = self.get_wrapped_info(wrapped_y)?;
+        if wrapped_y >= self.wrap_ids.len() {
+            log_error!("Wrapped row out of bounds");
+            return Err(io::Error::new(io::ErrorKind::NotFound, "Wrapped row out of bounds"));
+        }
 
+        let logical_y = self.wrap_ids[wrapped_y];
+        let first_visual = self.wrap_ids
+            .iter()
+            .position(|&id| id == logical_y)
+            .ok_or_else(|| {
+                log_error!("Logical ID not found in wrapped lines");
+                io::Error::new(io::ErrorKind::NotFound, "Logical ID not found in wrapped lines")
+            })?;
 
-        let segment_index = wrapped_y.saturating_sub(first_line_with_logical_id);
+        let segment_index = wrapped_y - first_visual;
 
         let mut logical_x = 0;
-        for i in 0..segment_index {
-            let line = self.get_line(first_line_with_logical_id + i)?;
-            logical_x += line.chars().count();
+        for seg in 0..segment_index {
+            let seg_text = self.get_line(first_visual + seg)?;
+            logical_x += seg_text.chars().count();
         }
-
         logical_x += wrapped_x;
-        let logical_y = self.wrap_ids[wrapped_y];
 
         Ok((logical_y, logical_x))
+    }
+
+    pub fn get_wrapped_position(&self, logical_y: usize, logical_x: usize) -> io::Result<(usize, usize)> {
+        let mut acc = 0;
+
+        let segments: Vec<(usize, &String)> = self.wrap_ids
+            .iter()
+            .enumerate()
+            .filter(|(_, id)| **id == logical_y)
+            .map(|(i, _)| (i, &self.wrapped_text[i]))
+            .collect();
+
+        if segments.is_empty() {
+            log_error!("No segments found for logical line {}", logical_y);
+            return Err(io::Error::new(io::ErrorKind::NotFound, "Logical line not found in wrapped segments"));
+        }
+
+        for (segment_index, (wrapped_y, seg_text)) in segments.iter().enumerate() {
+            let seg_len = seg_text.chars().count();
+
+            if logical_x < acc + seg_len {
+                let wrapped_x = logical_x - acc;
+                return Ok((*wrapped_y, wrapped_x));
+            }
+            acc += seg_len;
+
+            if segment_index == segments.len() - 1 && logical_x == acc {
+                return Ok((*wrapped_y, seg_len));
+            }
+        }
+
+        log_error!("Logical position ({}, {}) exceeds line length (total chars: {})", logical_y, logical_x, acc);
+        Err(io::Error::new(io::ErrorKind::InvalidInput, "Logical position exceeds line length"))
     }
 }
 
@@ -62,50 +82,33 @@ pub fn wrap_content(content: &str, debug: bool) -> io::Result<WrapResult> {
     let (width, _) = crossterm::terminal::size()?;
     let effective_width = width.saturating_sub(TERMINAL_RIGHT_MARGIN as u16).max(1);
 
-    let mut wrapped_text = String::new();
+    let mut segments = Vec::new();
     let mut wrap_ids = Vec::new();
 
     for (logical_idx, line) in content.lines().enumerate() {
         if line.is_empty() {
-            wrapped_text.push('\n');
+            segments.push(String::new());
             wrap_ids.push(logical_idx);
             continue;
         }
 
+        let chars: Vec<char> = line.chars().collect();
         let mut start = 0;
-        let mut count = 0;
 
-        for (i, ch) in line.char_indices() {
-            count += 1;
+        while start < chars.len() {
+            let end = (start + effective_width as usize).min(chars.len());
+            let segment: String = chars[start..end].iter().collect();
 
-            if count == effective_width {
-                wrapped_text.push_str(&line[start..=i]);
-                wrapped_text.push('\n');
-                wrap_ids.push(logical_idx);
-
-                start = i + ch.len_utf8();
-                count = 0;
-            }
-        }
-
-        if start < line.len() {
-            wrapped_text.push_str(&line[start..]);
-            wrapped_text.push('\n');
+            segments.push(segment);
             wrap_ids.push(logical_idx);
-        }
-    }
 
-    if wrapped_text.ends_with('\n') {
-        wrapped_text.pop();
+            start = end;
+        }
     }
 
     if debug {
         print_wrapper_values(width, effective_width);
     }
 
-Ok(WrapResult {
-    wrapped_text,
-    wrap_ids,
-})
-
+    Ok(WrapResult { wrapped_text: segments, wrap_ids })
 }

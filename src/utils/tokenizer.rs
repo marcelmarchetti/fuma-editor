@@ -41,12 +41,12 @@ fn generate_token(value: &String, id: usize,  token_type: TokenType) -> Token {
     }
 }
 
-pub fn tokenize_text(wrapped_content: &String, wrap_ids: &Vec<usize>, debug:bool) -> Vec<TokenWithPos>{
+pub fn tokenize_text(wrapped_content: &Vec<String>, wrap_ids: &Vec<usize>, debug:bool) -> Vec<TokenWithPos>{
     let mut tokens: Vec<Token> = Vec::new();
     let mut token_buffer: String = String::new();
     let mut row_index:usize = 0;
     
-    for lines in wrapped_content.lines() {
+    for lines in wrapped_content.clone() {
         if row_index != 0 && wrap_ids[row_index] != wrap_ids[row_index.saturating_sub(1)] && token_buffer.len() > 0 {
             tokens.push(generate_token(&token_buffer, tokens.len(), TokenType::Word));
             token_buffer.clear();
@@ -86,15 +86,15 @@ pub fn tokenize_text(wrapped_content: &String, wrap_ids: &Vec<usize>, debug:bool
     map_tokens(wrapped_content, tokens, debug)
 }
 
-pub fn map_tokens(content: &String, tokens: Vec<Token>, debug: bool) -> Vec<TokenWithPos> {
+pub fn map_tokens(content: &Vec<String>, tokens: Vec<Token>, debug: bool) -> Vec<TokenWithPos> {
     let mut token_index = 0;
     let mut tokens_with_pos: Vec<TokenWithPos> = Vec::new();
-    let lines: Vec<&str> = content.lines().collect();
+    let lines: Vec<String> = content.clone();
 
     while token_index < tokens.len() {
         let mut row = 0;
         while row < lines.len() {
-            let line = lines[row];
+            let line = &lines[row];
             let line_chars: Vec<char> = line.chars().collect();
             let mut col = 0;
 

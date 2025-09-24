@@ -40,8 +40,8 @@ pub fn print_token_mapping_result(tokens_with_pos: &Vec<TokenWithPos>) {
     execute!(stdout(), MoveTo(0,58), Print(format!("Tokens: {}", tokens_print ))).unwrap();
 }
 
-pub fn print_tokenize_result(wrapped_content: &String, tokens: &Vec<Token>){
-    let raw_word_count = wrapped_content.split_whitespace().count();
+pub fn print_tokenize_result(wrapped_content: &Vec<String>, tokens: &Vec<Token>){
+    let raw_word_count = wrapped_content.iter().count();
     let mut token_print: String = "".to_string();
     for token in tokens {
         if token_print.len() > 2000 {break;}
