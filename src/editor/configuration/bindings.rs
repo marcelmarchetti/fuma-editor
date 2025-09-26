@@ -1,8 +1,8 @@
-use std::{fs, io};
+use std::io;
 use crossterm::event::{KeyCode, KeyModifiers};
-use crate::{log_debug, log_error};
+use serde::Deserialize;
 use toml::Value;
-
+use crate::log_error;
 #[derive(Debug)]
 pub struct KeyBind {
     pub main_key: KeyCode,
@@ -12,6 +12,43 @@ pub struct KeyBind {
 impl KeyBind {
     pub fn new(main_key: KeyCode, modifier_key: KeyModifiers) -> Self {
         Self { main_key, modifier_key }
+    }
+
+    pub fn from_raw(raw: &str) -> io::Result<Self> {
+        let normalized = raw.to_lowercase();
+        let parts: Vec<&str> = normalized.split_whitespace().collect();
+
+        let mut main_key = KeyCode::Null;
+        let mut modifier_key = KeyModifiers::NONE;
+
+        for key in parts {
+            match key {
+                "control" => modifier_key = KeyModifiers::CONTROL,
+                "shift" => modifier_key = KeyModifiers::SHIFT,
+                "alt" => modifier_key = KeyModifiers::ALT,
+                "up" => main_key = KeyCode::Up,
+                "down" => main_key = KeyCode::Down,
+                "left" => main_key = KeyCode::Left,
+                "right" => main_key = KeyCode::Right,
+                "home" => main_key = KeyCode::Home,
+                "end" => main_key = KeyCode::End,
+                _ => {
+                    if key.chars().count() == 1 {
+                        main_key = KeyCode::Char(key.chars().next().unwrap());
+                    } else {
+                        log_error!("Too many characters in '{}'", raw);
+                        return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("Too many characters in '{}'", raw)));
+                    }
+                }
+            }
+        }
+
+        if main_key == KeyCode::Null {
+            log_error!("No main key in '{}'", raw);
+            return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("No main key in '{}'", raw)));
+        }
+
+        Ok(KeyBind::new(main_key, modifier_key))
     }
 }
 
@@ -31,8 +68,29 @@ pub struct KeysConfiguration {
     pub move_end_line: KeyBind,
 }
 
-impl Default for KeysConfiguration {
-    fn default() -> Self {
+impl KeysConfiguration {
+    pub fn from_raw(raw: RawKeysConfiguration) -> Self {
+        Self {
+            quit: KeyBind::from_raw(&raw.quit).unwrap_or_else(|_| KeysConfiguration::default().quit),
+            move_up: KeyBind::from_raw(&raw.move_up).unwrap_or_else(|_| KeysConfiguration::default().move_up),
+            move_down: KeyBind::from_raw(&raw.move_down).unwrap_or_else(|_| KeysConfiguration::default().move_down),
+            move_left: KeyBind::from_raw(&raw.move_left).unwrap_or_else(|_| KeysConfiguration::default().move_left),
+            move_right: KeyBind::from_raw(&raw.move_right).unwrap_or_else(|_| KeysConfiguration::default().move_right),
+            move_to_start: KeyBind::from_raw(&raw.move_to_start).unwrap_or_else(|_| KeysConfiguration::default().move_to_start),
+            move_to_end: KeyBind::from_raw(&raw.move_to_end).unwrap_or_else(|_| KeysConfiguration::default().move_to_end),
+            move_token_left: KeyBind::from_raw(&raw.move_token_left).unwrap_or_else(|_| KeysConfiguration::default().move_token_left),
+            move_token_right: KeyBind::from_raw(&raw.move_token_right).unwrap_or_else(|_| KeysConfiguration::default().move_token_right),
+            get_token: KeyBind::from_raw(&raw.get_token).unwrap_or_else(|_| KeysConfiguration::default().get_token),
+            tokenize_text: KeyBind::from_raw(&raw.tokenize_text).unwrap_or_else(|_| KeysConfiguration::default().tokenize_text),
+            move_start_line: KeyBind::from_raw(&raw.move_start_line).unwrap_or_else(|_| KeysConfiguration::default().move_start_line),
+            move_end_line: KeyBind::from_raw(&raw.move_end_line).unwrap_or_else(|_| KeysConfiguration::default().move_end_line),
+        }
+    }
+    pub fn from_toml(toml_file: &Value) -> io::Result<Self> {
+        let raw = RawKeysConfiguration::new(toml_file)?;
+        Ok(Self::from_raw(raw))
+    }
+    pub(crate) fn default() -> Self {
         Self {
             quit: KeyBind::new(KeyCode::Char('q'), KeyModifiers::CONTROL),
             move_up: KeyBind::new(KeyCode::Up, KeyModifiers::NONE),
@@ -51,88 +109,30 @@ impl Default for KeysConfiguration {
     }
 }
 
-impl KeysConfiguration {
-    pub(crate) fn new(toml_file: &Value) -> io::Result<Self> {
-        Ok(Self {
-            quit: parse_to_keybind("quit", toml_file)?,
-            move_up: parse_to_keybind("move_up", toml_file)?,
-            move_down: parse_to_keybind("move_down", toml_file)?,
-            move_left: parse_to_keybind("move_left", toml_file)?,
-            move_right: parse_to_keybind("move_right", toml_file)?,
-            move_to_start: parse_to_keybind("move_to_start", toml_file)?,
-            move_to_end: parse_to_keybind("move_to_end", toml_file)?,
-            move_token_left: parse_to_keybind("move_token_left", toml_file)?,
-            move_token_right: parse_to_keybind("move_token_right", toml_file)?,
-            get_token: parse_to_keybind("get_token", toml_file)?,
-            tokenize_text: parse_to_keybind("tokenize_text", toml_file)?,
-            move_start_line: parse_to_keybind("move_start_line", toml_file)?,
-            move_end_line: parse_to_keybind("move_end_line", toml_file)?,
-        })
+#[derive(Debug, Deserialize)]
+pub struct RawKeysConfiguration {
+    pub quit: String,
+    pub move_up: String,
+    pub move_down: String,
+    pub move_left: String,
+    pub move_right: String,
+    pub move_to_start: String,
+    pub move_to_end: String,
+    pub move_token_left: String,
+    pub move_token_right: String,
+    pub get_token: String,
+    pub tokenize_text: String,
+    pub move_start_line: String,
+    pub move_end_line: String,
+}
+
+impl RawKeysConfiguration {
+    pub fn new(toml_file: &Value) -> io::Result<Self> {
+        let section = toml_file.get("bindings").expect("Missing [bindings] section]");
+        let section_str = toml::to_string(section).unwrap();
+        let raw: RawKeysConfiguration = toml::from_str(&section_str).expect("Failed to parse RawKeysConfiguration");
+        Ok(raw)
     }
 }
 
-fn parse_to_keybind(instruction_key: &str, config_file: &Value) -> io::Result<KeyBind> {
-    let bindings = config_file
-        .get("bindings")
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Missing [bindings] section"))?;
 
-    let raw_bind = bindings[instruction_key]
-        .as_str()
-        .ok_or_else(|| {
-            log_error!("Invalid config file ({}), using default keybinds", instruction_key);
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("key '{}' not found or not a string", instruction_key),
-            )
-        })?
-        .to_string();
-
-    let normalized_raw_bind = raw_bind.to_lowercase();
-    let binds: Vec<&str> = normalized_raw_bind.split_whitespace().collect();
-
-    let mut main_key: KeyCode = KeyCode::Null;
-    let mut modifier_key = KeyModifiers::NONE;
-
-    if binds.len() > 3 {
-        log_error!("too many arguments on '{}' key bind", raw_bind);
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("too many arguments on '{}' key bind", raw_bind),
-        ));
-    }
-
-    for key in binds {
-        match key {
-            "control" => modifier_key = KeyModifiers::CONTROL,
-            "shift" => modifier_key = KeyModifiers::SHIFT,
-            "alt" => modifier_key = KeyModifiers::ALT,
-            "up" => main_key = KeyCode::Up,
-            "down" => main_key = KeyCode::Down,
-            "left" => main_key = KeyCode::Left,
-            "right" => main_key = KeyCode::Right,
-            "home" => main_key = KeyCode::Home,
-            "end" => main_key = KeyCode::End,
-            _ => {
-                if key.chars().count() == 1 {
-                    main_key = KeyCode::Char(key.chars().next().unwrap());
-                } else {
-                    log_error!("Too many characters on '{}' in '{}'", main_key, raw_bind);
-                    return Err(io::Error::new(
-                        io::ErrorKind::InvalidInput,
-                        format!("Too many characters on '{}' in '{}'", main_key, raw_bind),
-                    ));
-                }
-            }
-        }
-    }
-
-    if main_key == KeyCode::Null {
-        log_error!("no main key in '{}'", raw_bind);
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("no main key in '{}'", raw_bind),
-        ));
-    }
-
-    Ok(KeyBind::new(main_key, modifier_key))
-}

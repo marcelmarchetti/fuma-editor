@@ -12,8 +12,10 @@ pub fn program_loop(contents: String) -> io::Result<()> {
     log_info!("Preparing to run the program");
 
 
-    let keys_config = load_config()?;
-    let keymap = build_keymap(&keys_config);
+    let configuration = load_config()?;
+    let keymap = build_keymap(&configuration.bindings);
+    configuration.apply_configuration();
+
     let mut state = FumaState::new(contents)?;
 
     try_enter_alternate_screen()?;

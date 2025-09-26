@@ -1,7 +1,7 @@
 use std::io;
 use std::sync::atomic::Ordering;
 use crossterm::execute;
-use crate::values::globals::{SHOW_LEFT_MARGIN, TERMINAL_LEFT_MARGIN, TERMINAL_RIGHT_MARGIN};
+use crate::values::globals::{SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN, TERMINAL_RIGHT_MARGIN};
 use crate::log_error;
 use crate::utils::debug::print_wrapper_values;
 
@@ -80,7 +80,7 @@ impl WrapResult {
 }
 
 pub fn wrap_content(content: &str, debug: bool) -> io::Result<WrapResult> {
-    if SHOW_LEFT_MARGIN.load(Ordering::Relaxed) {
+    if SHOW_LINE_NUMBERING.load(Ordering::Relaxed) {
         TERMINAL_LEFT_MARGIN.store(content.lines().count().to_string().len() + 1, Ordering::Relaxed);
     } else {
         TERMINAL_LEFT_MARGIN.store(0, Ordering::Relaxed);

@@ -6,7 +6,7 @@ use crossterm::{execute};
 use crossterm::style::Print;
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
 use crate::editor::fuma_state::FumaState;
-use crate::values::globals::{DELIMITATOR, SHOW_LEFT_MARGIN, TERMINAL_LEFT_MARGIN};
+use crate::values::globals::{DELIMITATOR, SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN};
 
 pub fn clean_screen() -> io::Result<()>{
     execute!(
@@ -42,7 +42,7 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
 
     for (i, line) in lines[start..end].iter().enumerate() {
 
-        if SHOW_LEFT_MARGIN.load(Ordering::Relaxed) {
+        if SHOW_LINE_NUMBERING.load(Ordering::Relaxed) {
             if last_wrapped_inx != state.wrap_result.wrap_ids[start + i] || first_line {
                 last_wrapped_inx = state.wrap_result.wrap_ids[start + i];
 

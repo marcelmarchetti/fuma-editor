@@ -7,8 +7,8 @@ pub struct EditorConfiguration {
     pub line_numbering: bool
 }
 
-impl Default for EditorConfiguration {
-    fn default() -> Self {
+impl EditorConfiguration {
+    pub fn default() -> Self {
         Self {
             line_numbering: false
         }

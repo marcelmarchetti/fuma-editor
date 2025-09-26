@@ -8,6 +8,6 @@ pub const TERMINAL_RIGHT_MARGIN: usize = 2;
 
 pub static TERMINAL_LEFT_MARGIN: AtomicUsize = AtomicUsize::new(0);
 
-pub static SHOW_LEFT_MARGIN: AtomicBool = AtomicBool::new(true);
+pub static SHOW_LINE_NUMBERING: AtomicBool = AtomicBool::new(true);
 
 pub const DELIMITATOR: char = '│';

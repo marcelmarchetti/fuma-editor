@@ -1,9 +1,39 @@
 use std::{fs, io};
+use std::sync::atomic::Ordering;
 use toml::Value;
 use crate::{log_debug, log_error};
-use crate::editor::configuration::bindings::KeysConfiguration;
+use crate::editor::configuration::bindings::{KeysConfiguration};
+use crate::editor::configuration::editor::EditorConfiguration;
+use crate::values::globals::SHOW_LINE_NUMBERING;
 
-pub fn load_config() -> io::Result<> {
+pub struct Configuration {
+    pub bindings: KeysConfiguration,
+    pub editor: EditorConfiguration,
+}
+
+impl Configuration {
+    pub fn new(toml_file: &Value) -> io::Result<Self> {
+        Ok(
+            Self {
+                bindings: KeysConfiguration::from_toml(toml_file)?,
+                editor: EditorConfiguration::new(toml_file),
+            }
+        )
+    }
+    pub fn default() -> Self {
+        Self {
+            bindings: KeysConfiguration::default(),
+            editor: EditorConfiguration::default(),
+        }
+    }
+    pub fn apply_configuration(self) {
+        SHOW_LINE_NUMBERING.store(self.editor.line_numbering, Ordering::Relaxed);
+    }
+}
+
+
+
+pub fn load_config() -> io::Result<Configuration> {
     let conf_content = fs::read_to_string("config.toml");
 
     match conf_content {
@@ -12,19 +42,19 @@ pub fn load_config() -> io::Result<> {
                 Ok(val) => val,
                 Err(e) => {
                     log_error!("Invalid config file ({}), using default keybinds", e);
-                    return Ok(KeysConfiguration::default());
+                    return Ok(Configuration::default());
                 }
             };
 
-            match KeysConfiguration::new(&toml_file) {
+            match Configuration::new(&toml_file) {
                 Ok(cfg) => Ok(cfg),
-                Err(_) => Ok(KeysConfiguration::default()),
+                Err(_) => Ok(Configuration::default()),
             }
         }
 
         Err(_) => {
             log_error!("config.toml not found, using default keybinds");
-            Ok(KeysConfiguration::default())
+            Ok(Configuration::default())
         }
     }
 }
@@ -36,8 +66,8 @@ pub fn test_config() -> io::Result<()> {
     match load_config() {
         Ok(config) => {
             log_debug!("Configuration loaded!");
-            log_debug!("Exit key: {:?}", config.quit);
-            log_debug!("Move up key: {:?}", config.move_up);
+            log_debug!("Exit key: {:?}", config.bindings.quit);
+            log_debug!("Move up key: {:?}", config.bindings.move_up);
             Ok(())
         },
         Err(e) => {
