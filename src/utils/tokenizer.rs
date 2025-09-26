@@ -34,6 +34,18 @@ pub struct TokenWithPos {
     pub row_end: Option<usize>,
 }
 
+impl TokenWithPos {
+    pub fn empty() -> Self {
+        Self {
+            token: None,
+            col_start: Some(0),
+            col_end: Some(0),
+            row_end: Some(0),
+            row_start: Some(0),
+        }
+    }
+}
+
 
 fn generate_token(value: &String, id: usize,  token_type: TokenType) -> Token {
     Token {

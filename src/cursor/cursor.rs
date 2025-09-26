@@ -25,8 +25,13 @@ impl CursorPos {
         let lines: &Vec<String> = contents;
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
-        let last_token = tokenized_words[0].clone();
         let min_x = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
+
+        let last_token = if tokenized_words.is_empty() {
+            TokenWithPos::empty()
+        } else {
+            tokenized_words[0].clone()
+        };
 
         Self {
             min_x,
