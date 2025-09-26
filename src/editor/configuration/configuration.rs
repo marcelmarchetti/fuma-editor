@@ -1,7 +1,7 @@
 use std::{fs, io};
 use std::sync::atomic::Ordering;
 use toml::Value;
-use crate::{log_debug, log_error};
+use crate::{log_debug, log_error, log_info};
 use crate::editor::configuration::bindings::{KeysConfiguration};
 use crate::editor::configuration::editor::EditorConfiguration;
 use crate::values::globals::SHOW_LINE_NUMBERING;
@@ -39,7 +39,10 @@ pub fn load_config() -> io::Result<Configuration> {
     match conf_content {
         Ok(content) => {
             let toml_file: Value = match toml::from_str(&content) {
-                Ok(val) => val,
+                Ok(val) => { 
+                    log_info!("Loaded configuration from TOML");    
+                    val
+                },
                 Err(e) => {
                     log_error!("Invalid config file ({}), using default keybinds", e);
                     return Ok(Configuration::default());

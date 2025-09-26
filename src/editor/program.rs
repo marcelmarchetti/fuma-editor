@@ -41,5 +41,6 @@ pub fn program_loop(contents: String) -> io::Result<()> {
             }
         }
     }
+    log_info!("Program exited cleanly");
     Ok(())
 }
