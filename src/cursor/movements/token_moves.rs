@@ -88,7 +88,7 @@ impl CursorPos {
                     (token.row_end == Some(self.y) && self.x <= col_end)))
     }
 
-    fn use_last_token(&self, direction: Direction) -> bool {
+    pub(crate) fn use_last_token(&self, direction: Direction) -> bool {
         match direction {
             Direction::Right => !self.last_fast_right && self.cursor_in_last_token(),
             Direction::Left => self.last_fast_right && self.cursor_in_last_token(),

@@ -1,5 +1,6 @@
 use std::io;
 use crate::cursor::cursor::CursorPos;
+use crate::values::globals::TERMINAL_RIGHT_MARGIN;
 
 impl CursorPos {
     
@@ -21,12 +22,13 @@ impl CursorPos {
         false
     }
     pub fn move_right(&mut self) {
-        let max_x = self.get_current_line_length() + 1;
+        let (cols , _) = crossterm::terminal::size().unwrap();
+        let max_x = self.get_current_line_length() + self.min_x;
 
         if self.x + 1 <= max_x {
             if self.x + 1 == max_x && self.is_same_logical_line(self.y + 1) {
                 self.y += 1;
-                self.x = 0;
+                self.x = self.min_x;
                 self.last_x = self.x;
                 return;
             } else {
@@ -35,17 +37,17 @@ impl CursorPos {
             }
         } else if self.is_same_logical_line(self.y + 1) {
             self.y += 1;
-            self.x = 0;
+            self.x = self.min_x;
             self.last_x = self.x;
         }
     }
     pub fn move_left(&mut self) {
-        if self.x > 0 {
+        if self.x > self.min_x {
             self.x -= 1;
             self.last_x = self.x;
         } else if self.y > 0 && self.is_same_logical_line(self.y - 1) {
             self.y -= 1;
-            self.x = self.get_current_line_length();
+            self.x = self.get_current_line_length() + self.min_x - 1;
             self.last_x = self.x;
         }
     }

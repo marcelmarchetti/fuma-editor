@@ -1,6 +1,7 @@
 use std::io;
+use std::sync::atomic::Ordering;
 use crossterm::execute;
-use crate::constants::values::TERMINAL_RIGHT_MARGIN;
+use crate::values::globals::{SHOW_LEFT_MARGIN, TERMINAL_LEFT_MARGIN, TERMINAL_RIGHT_MARGIN};
 use crate::log_error;
 use crate::utils::debug::print_wrapper_values;
 
@@ -39,7 +40,7 @@ impl WrapResult {
             let seg_text = self.get_line(first_visual + seg)?;
             logical_x += seg_text.chars().count();
         }
-        logical_x += wrapped_x;
+        logical_x += wrapped_x.saturating_sub(TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed));
 
         Ok((logical_y, logical_x))
     }
@@ -63,13 +64,13 @@ impl WrapResult {
             let seg_len = seg_text.chars().count();
 
             if logical_x < acc + seg_len {
-                let wrapped_x = logical_x - acc;
+                let wrapped_x = logical_x - acc + TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
                 return Ok((*wrapped_y, wrapped_x));
             }
             acc += seg_len;
 
             if segment_index == segments.len() - 1 && logical_x == acc {
-                return Ok((*wrapped_y, seg_len));
+                return Ok((*wrapped_y, seg_len + TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed)));
             }
         }
 
@@ -79,8 +80,16 @@ impl WrapResult {
 }
 
 pub fn wrap_content(content: &str, debug: bool) -> io::Result<WrapResult> {
+    if SHOW_LEFT_MARGIN.load(Ordering::Relaxed) {
+        TERMINAL_LEFT_MARGIN.store(content.lines().count().to_string().len() + 1, Ordering::Relaxed);
+    } else {
+        TERMINAL_LEFT_MARGIN.store(0, Ordering::Relaxed);
+    }
+
+
     let (width, _) = crossterm::terminal::size()?;
-    let effective_width = width.saturating_sub(TERMINAL_RIGHT_MARGIN as u16).max(1);
+    let effective_width = width.saturating_sub(
+        TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed) as u16 + TERMINAL_RIGHT_MARGIN as u16).max(1);
 
     let mut segments = Vec::new();
     let mut wrap_ids = Vec::new();
@@ -104,6 +113,8 @@ pub fn wrap_content(content: &str, debug: bool) -> io::Result<WrapResult> {
 
             start = end;
         }
+
+
     }
 
     if debug {

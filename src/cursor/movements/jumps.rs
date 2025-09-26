@@ -30,10 +30,29 @@ impl CursorPos {
     }
 
     pub fn move_start_line(&mut self) -> bool {
-        self.x = 0;
+        let mut count = 1;
+        while self.is_same_logical_line(self.y.saturating_sub(count)) {
+            count += 1;
+            if self.y.saturating_sub(count) == 0 {
+                break;
+            }
+        }
+        self.y = self.y.saturating_sub( count - 1);
+
+        self.x = self.min_x;
         self.last_x = self.x;
-        self.last_fast_right = true;
-        self.last_token = self.get_token(Direction::Left).unwrap();
+        self.last_fast_right = false;
+
+        let actual_token = if self.use_last_token(Direction::Left) {
+            Some(self.last_token.clone())
+        } else {
+            self.get_token(Direction::Left)
+        };
+
+        if actual_token.is_some() {
+            self.last_token = actual_token.unwrap();
+        }
+
         self.ensure_visible()
 
     }
@@ -44,10 +63,21 @@ impl CursorPos {
             count += 1;
         }
         self.y += count - 1;
-        self.x = self.get_current_line_length();
+        self.x = self.get_current_line_length() + self.min_x;
         self.last_x = self.x;
-        self.last_fast_right = false;
-        self.last_token = self.get_token(Direction::Left).unwrap();
+
+        let actual_token = if self.use_last_token(Direction::Right) {
+            Some(self.last_token.clone())
+        } else {
+            self.get_token(Direction::Right)
+        };
+
+        self.last_fast_right = true;
+
+        if actual_token.is_some() {
+            self.last_token = actual_token.unwrap();
+        }
+
         self.clamp_x_to_current_line();
         self.ensure_visible()
     }

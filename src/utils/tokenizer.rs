@@ -1,5 +1,7 @@
 use std::fmt;
+use std::sync::atomic::Ordering;
 use crate::utils::debug::{print_token_mapping_result, print_tokenize_result};
+use crate::values::globals::TERMINAL_LEFT_MARGIN;
 
 #[derive(Clone, Debug)]
 pub enum TokenType{
@@ -90,6 +92,7 @@ pub fn map_tokens(content: &Vec<String>, tokens: Vec<Token>, debug: bool) -> Vec
     let mut token_index = 0;
     let mut tokens_with_pos: Vec<TokenWithPos> = Vec::new();
     let lines: Vec<String> = content.clone();
+    let left_margin = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
 
     while token_index < tokens.len() {
         let mut row = 0;
@@ -117,8 +120,8 @@ pub fn map_tokens(content: &Vec<String>, tokens: Vec<Token>, debug: bool) -> Vec
                             token: Some(current_token.clone()),
                             row_start: Some(row),
                             row_end: Some(row),
-                            col_start: Some(col),
-                            col_end: Some(col + token_chars.len() - 1),
+                            col_start: Some(col + left_margin),
+                            col_end: Some(col + token_chars.len() - 1 + left_margin),
                         });
                         col += token_chars.len();
                         token_index += 1;
@@ -154,8 +157,8 @@ pub fn map_tokens(content: &Vec<String>, tokens: Vec<Token>, debug: bool) -> Vec
                             token: Some(current_token.clone()),
                             row_start: Some(row),
                             row_end: Some(current_row),
-                            col_start: Some(start_col),
-                            col_end: Some(end_col),
+                            col_start: Some(start_col + left_margin),
+                            col_end: Some(end_col + left_margin),
                         });
                         token_index += 1;
                         break;

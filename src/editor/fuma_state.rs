@@ -1,5 +1,5 @@
 use std::io;
-use crate::constants::values::{DEBUG_TOKENIZER, DEBUG_WRAPPING};
+use crate::values::globals::{DEBUG_TOKENIZER, DEBUG_WRAPPING};
 use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
 use crate::editor::text_buffer::TextBuffer;

@@ -2,10 +2,12 @@
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::execute;
 use std::io::{stdout, Write};
+use std::sync::atomic::Ordering;
 use crate::utils::tokenizer::{TokenWithPos};
-
+use crate::values::globals::TERMINAL_LEFT_MARGIN;
 
 pub struct CursorPos {
+    pub(crate) min_x: usize,
     pub(crate) x: usize,
     pub(crate) y: usize,
     pub(crate) last_x: usize,
@@ -24,11 +26,13 @@ impl CursorPos {
         let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
         let last_token = tokenized_words[0].clone();
+        let min_x = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
 
         Self {
-            x: 0,
+            min_x,
+            x: min_x,
             y: 0,
-            last_x: 0,
+            last_x: min_x,
             max_y,
             line_lengths,
             vertical_offset: 0,
@@ -86,7 +90,7 @@ impl CursorPos {
     }
 
     pub(crate) fn clamp_x_to_current_line(&mut self) {
-        let max_x = self.get_current_line_length();
+        let max_x = self.get_current_line_length() + self.min_x;
         if self.last_x > max_x {
             self.x = max_x;
         } else {

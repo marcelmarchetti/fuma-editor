@@ -1,4 +1,4 @@
-use crate::constants::values::TERMINAL_RIGHT_MARGIN;
+use crate::values::globals::TERMINAL_RIGHT_MARGIN;
 use crate::cursor::cursor::CursorPos;
 
 pub struct TextBuffer {
