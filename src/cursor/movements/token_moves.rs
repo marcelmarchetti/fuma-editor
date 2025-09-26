@@ -112,7 +112,7 @@ impl CursorPos {
                         self.last_fast_right = true;
                     }
                     Direction::Left => {
-                        self.x = token.col_start.unwrap().saturating_sub(1);
+                        self.x = token.col_start.unwrap().saturating_sub(1).max(self.min_x);
                         self.y = token.row_start.unwrap();
                         self.last_fast_right = false;
                     }
