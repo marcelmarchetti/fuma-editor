@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::io;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crate::editor::configuration::bindings::KeysConfiguration;
 use crate::editor::fuma_state::FumaState;
-use crate::editor::keybind::KeysConfiguration;
 use crate::utils::direction::Direction;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
