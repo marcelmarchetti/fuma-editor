@@ -2,7 +2,6 @@ use std::io::stdout;
 use crossterm::cursor::MoveTo;
 use crossterm::execute;
 use crossterm::style::Print;
-use crate::utils::content_wrapper::WrapResult;
 use crate::utils::tokenizer::{Token, TokenWithPos};
 
 #[allow(dead_code)]

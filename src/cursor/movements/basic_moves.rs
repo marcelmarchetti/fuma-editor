@@ -1,6 +1,4 @@
-use std::io;
 use crate::cursor::cursor::CursorPos;
-use crate::values::globals::TERMINAL_RIGHT_MARGIN;
 
 impl CursorPos {
     
@@ -22,7 +20,6 @@ impl CursorPos {
         false
     }
     pub fn move_right(&mut self) {
-        let (cols , _) = crossterm::terminal::size().unwrap();
         let max_x = self.get_current_line_length() + self.min_x;
 
         if self.x + 1 <= max_x {

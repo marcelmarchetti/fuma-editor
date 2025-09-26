@@ -1,5 +1,5 @@
 ﻿use std::io;
-use std::io::{stdout, BufRead};
+use std::io::{stdout};
 use std::sync::atomic::Ordering;
 use crossterm::cursor::{MoveTo, Show};
 use crossterm::{execute};

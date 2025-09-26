@@ -15,6 +15,6 @@ macro_rules! log_debug {
 #[macro_export]
 macro_rules! log_info {
     ($($arg:tt)*) => {
-        let _ = crate::utils::logger::log_message(&format!($($arg)*));
+        let _ = crate::utils::logger::log_info(&format!($($arg)*));
     }
 }

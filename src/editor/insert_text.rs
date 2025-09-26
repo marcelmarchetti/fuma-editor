@@ -1,5 +1,4 @@
 use std::io;
-use std::ops::Index;
 use crate::values::globals::TERMINAL_RIGHT_MARGIN;
 use crate::editor::fuma_state::FumaState;
 

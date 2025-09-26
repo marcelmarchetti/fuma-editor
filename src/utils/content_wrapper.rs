@@ -1,6 +1,5 @@
 use std::io;
 use std::sync::atomic::Ordering;
-use crossterm::execute;
 use crate::values::globals::{SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN, TERMINAL_RIGHT_MARGIN};
 use crate::log_error;
 use crate::utils::debug::print_wrapper_values;

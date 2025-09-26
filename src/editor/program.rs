@@ -19,7 +19,7 @@ pub fn program_loop(contents: String) -> io::Result<()> {
     let mut state = FumaState::new(contents)?;
 
     try_enter_alternate_screen()?;
-    let guard = AltScreenGuard;
+    let _guard = AltScreenGuard;
     try_enable_raw_mode()?;
     
     state.redraw()?;

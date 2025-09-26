@@ -48,13 +48,10 @@ impl TextBuffer {
         self.lines.len()
     }
 
-    pub fn get_line(&self, idx: usize) -> Option<&str> {
-        self.lines.get(idx).map(|s| s.as_str())
-    }
     pub fn insert_newline(&mut self, line: usize, col: usize, cursor: &CursorPos) {
 
-        let (cols, rows) = crossterm::terminal::size().unwrap();
-        if line < self.lines.len() {
+        let (cols, _) = crossterm::terminal::size().unwrap();
+        if line < self.line_count() {
             let current = self.lines[line].clone();
             let (before, after) = current.split_at(col);
             self.lines[line] = before.to_string();
@@ -71,7 +68,7 @@ impl TextBuffer {
     }
 
     pub fn backspace(&mut self, line: usize, col: usize) -> bool {
-        if line < self.lines.len() {
+        if line < self.line_count() {
             if col > 0 {
                 self.remove_char(line, col - 1);
                 return false;
@@ -86,13 +83,13 @@ impl TextBuffer {
     }
 
     pub fn delete(&mut self, line: usize, col: usize) -> bool {
-        if line < self.lines.len() {
+        if line < self.line_count() {
             let char_count = self.lines[line].chars().count();
 
             if col < char_count {
                 self.remove_char(line, col);
                 return false;
-            } else if line + 1 < self.lines.len() {
+            } else if line + 1 < self.line_count() {
                 let next_line = self.lines.remove(line + 1);
                 self.lines[line].push_str(&next_line);
                 return true;

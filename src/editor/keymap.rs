@@ -42,7 +42,7 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
 
 pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>) -> io::Result<bool> {
     match event {
-        Event::Resize(cols, _) => state.resize_console()?,
+        Event::Resize(_, _) => state.resize_console()?,
         Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => {
             if let Some(action) = keymap.get(&(code, modifiers)) {
                 match action {
