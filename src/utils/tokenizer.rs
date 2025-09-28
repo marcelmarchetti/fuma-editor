@@ -1,7 +1,6 @@
 use std::{fmt, io};
 use std::sync::atomic::Ordering;
-use crate::editor::text_buffer::TextBuffer;
-use crate::log_error;
+use crate::{log_debug, log_error};
 use crate::utils::content_wrapper::WrapResult;
 use crate::utils::debug::{print_tokens_debug};
 use crate::values::globals::TERMINAL_LEFT_MARGIN;
@@ -132,45 +131,48 @@ impl fmt::Debug for Token2P {
     }
 }
 
-fn start_new_token(mock_token: &mut Token2P, token_count: &mut usize, gen_token: &mut bool, value_buffer: &mut String) -> io::Result<()> {
+fn start_new_token(mock_token: &mut Token2P, token_count: &mut usize, gen_token: &mut bool, value_buffer: &mut String) {
     *mock_token = Token2P::new();
     *gen_token = true;
     *token_count += 1;
     *value_buffer = String::new();
-    Ok(())
 }
 
-fn start_mock_token(mock_token: &mut Token2P, token_count: usize, inx_col: usize, inx_row: usize) -> io::Result<()> {
+fn start_mock_token(mock_token: &mut Token2P, token_count: usize, inx_col: usize, inx_row: usize) {
     let terminal_left_margin = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
 
     mock_token.id = Some(token_count);
     mock_token.col_start = Some(terminal_left_margin + inx_col);
     mock_token.row_start = Some(inx_row);
-    Ok(())
 }
 
 fn end_mock_token(mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: String, token_type: TokenType, tokens: &mut Vec<Token2>) -> io::Result<()> {
     let terminal_left_margin = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
 
-    mock_token.value = Some(value_buffer.clone());
+    mock_token.value = Some(value_buffer);
     mock_token.col_end = Some(terminal_left_margin + inx_col );
     mock_token.row_end = Some(inx_row);
     mock_token.token_type = Some(token_type);
 
-    tokens.push(Token2::new(&mock_token.clone())?);
+    tokens.push(Token2::new(mock_token)?);
 
     Ok(())
 }
 
 fn add_token_and_reset_mock (mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: &mut String, token_type: TokenType, tokens: &mut Vec<Token2>, token_count: &mut usize, gen_token: &mut bool ) -> io::Result<()> {
     end_mock_token(mock_token, inx_col, inx_row, value_buffer.clone(), token_type, tokens)?;
-    start_new_token(mock_token, token_count, gen_token, value_buffer)?;
+    start_new_token(mock_token, token_count, gen_token, value_buffer);
     *gen_token = true;
     Ok(())
 }
 pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Token2>> {
-    let wrap_text = wrap_result.wrapped_text.clone();
-    let wrap_ids = wrap_result.wrap_ids.clone();
+    let wrap_text = &wrap_result.wrapped_text;
+    let wrap_ids = &wrap_result.wrap_ids;
+
+    for line in wrap_text {
+        log_debug!("{}", line);
+    }
+
 
     let mut tokens: Vec<Token2> = Vec::new();
     let mut value_buffer = String::new();
@@ -184,7 +186,7 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
     for (inx_row, line) in wrap_text.iter().enumerate() {
         for (inx_col, c) in line.chars().enumerate() {
             if gen_token {
-                start_mock_token(&mut mock_token, token_count, inx_col, inx_row)?;
+                start_mock_token(&mut mock_token, token_count, inx_col, inx_row);
                 gen_token = false;
             }
             match c {
@@ -202,8 +204,9 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
                     if !value_buffer.is_empty() {
                         add_token_and_reset_mock(&mut mock_token, inx_col.saturating_sub(1), inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
                     }
-                    start_mock_token(&mut mock_token, token_count, inx_col, inx_row)?;
-                    add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut c.to_string(), TokenType::Symbol, &mut tokens, &mut token_count, &mut gen_token)?;
+                    let mut symbol = c.to_string();
+                    start_mock_token(&mut mock_token, token_count, inx_col, inx_row);
+                    add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut symbol, TokenType::Symbol, &mut tokens, &mut token_count, &mut gen_token)?;
                 }
                 _ => {
                     log_error!("Invalid character: {}", c);
@@ -211,16 +214,27 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
                 }
             }
         }
-        if wrap_ids[inx_row] != wrap_ids[inx_row.saturating_add(1).min(wrap_ids.len() - 1)] {
+        if wrap_ids[inx_row] != wrap_ids[inx_row.saturating_add(1).min(wrap_ids.len().saturating_sub(1))] {
             if !value_buffer.is_empty() {
+
                 mock_token.value = Some(value_buffer.clone());
-                mock_token.col_end = Some(terminal_left_margin + line.len() - 1);
-                mock_token.row_start = Some(inx_row);
+                mock_token.col_end = Some(terminal_left_margin + line.chars().count().saturating_sub(1));
+                mock_token.row_end = Some(inx_row);
                 mock_token.token_type = Some(TokenType::Word);
-                start_new_token(&mut mock_token, &mut token_count, &mut gen_token, &mut value_buffer)?;
+                tokens.push(Token2::new(&mock_token)?);
+                start_new_token(&mut mock_token, &mut token_count, &mut gen_token, &mut value_buffer);
             }
         }
     }
+
+    if !value_buffer.is_empty() {
+        mock_token.value = Some(value_buffer);
+        mock_token.col_end = Some(terminal_left_margin + wrap_text[wrap_text.len().saturating_sub(1)].chars().count().saturating_sub(1));
+        mock_token.row_end = Some(wrap_text.len().saturating_sub(1));
+        mock_token.token_type = Some(TokenType::Word);
+        tokens.push(Token2::new(&mock_token)?);
+    }
+
     if debug { print_tokens_debug(&tokens); }
     Ok(tokens)
 }

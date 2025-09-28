@@ -3,7 +3,7 @@ use std::io::stdout;
 use crossterm::cursor::MoveTo;
 use crossterm::execute;
 use crossterm::style::Print;
-use crate::{log_debug, log_error};
+use crate::{log_debug};
 use crate::utils::tokenizer::{Token2};
 
 pub fn print_token2(token: &Token2) {

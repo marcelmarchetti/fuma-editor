@@ -18,7 +18,6 @@ pub struct CursorPos {
     pub(crate) tokenized_words: Vec<Token2>,
     pub(crate) last_token: Token2,
     pub(crate) last_fast_right: bool,
-    pub wrapped_text: Vec<String>
 }
 
 impl CursorPos {
@@ -46,7 +45,6 @@ impl CursorPos {
             tokenized_words,
             last_token,
             last_fast_right: false,
-            wrapped_text: wrapped_text.clone(),
         }
     }
 

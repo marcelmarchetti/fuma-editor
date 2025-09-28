@@ -1,7 +1,6 @@
 use std::io;
 use crate::cursor::cursor::CursorPos;
 use crate::{log_info};
-use crate::utils::debug::print_token2;
 use crate::utils::direction::Direction;
 use crate::utils::tokenizer::Token2;
 
@@ -21,6 +20,40 @@ impl Token2 {
 
         if row == self.row_end {
             return col <= self.col_end;
+        }
+        false
+    }
+
+    pub fn contains_with_margin(&self, row: usize, col: usize, left_margin: usize, right_margin: usize, ) -> bool {
+        let (start_row, start_col, end_row, end_col) = if self.row_start <= self.row_end {
+            (self.row_start, self.col_start, self.row_end, self.col_end)
+        } else {
+            (self.row_end, self.col_end, self.row_start, self.col_start)
+        };
+
+        if start_row == end_row {
+            let (c0, c1) = if start_col <= end_col {
+                (start_col, end_col)
+            } else {
+                (end_col, start_col)
+            };
+            let left = c0.saturating_sub(left_margin);
+            let right = c1.saturating_add(right_margin);
+            return row == start_row && (left..=right).contains(&col);
+        }
+
+        if row > start_row && row < end_row {
+            return true;
+        }
+
+        if row == start_row {
+            let left = start_col.saturating_sub(left_margin);
+            return col >= left;
+        }
+
+        if row == end_row {
+            let right = end_col.saturating_add(right_margin);
+            return col <= right;
         }
         false
     }
@@ -46,14 +79,7 @@ impl CursorPos {
     }
 
     fn cursor_in_last_token(&self) -> bool {
-        let token = &self.last_token;
-        let col_start = token.col_start.saturating_sub(1);
-        let col_end = token.col_end.saturating_add(1);
-
-        (col_start..=col_end).contains(&self.x) && (token.row_start..=token.row_end).contains(&self.y) ||
-            (token.row_start < self.y && token.row_end > self.y) ||
-            (token.row_start == self.y && col_start <= self.x && token.row_end > self.y) ||
-            (token.row_end == self.y && col_end >= self.x && token.row_start < self.y)
+        self.last_token.contains_with_margin(self.y, self.x, 1, 1)
     }
 
     pub(crate) fn use_last_token(&self, direction: Direction) -> bool {
@@ -76,9 +102,9 @@ impl CursorPos {
             match direction {
                 Direction::Right => {
                     if col < line_length {
-                        col += 1;
+                        col = col.saturating_add_signed(direction.step());
                     } else {
-                        row += 1;
+                        row = row.saturating_add_signed(direction.step());
                         if row >= self.wrap_ids.len() || self.wrap_ids[row] != wrap_id {
                             break;
                         }
@@ -87,12 +113,12 @@ impl CursorPos {
                 }
                 Direction::Left => {
                     if col > self.min_x {
-                        col = col.saturating_sub(1);
+                        col = col.saturating_add_signed(direction.step());
                     } else {
-                        if row == 0 || self.wrap_ids[row - 1] != wrap_id {
+                        if row == 0 || self.wrap_ids[row.saturating_sub(1)] != wrap_id {
                             break;
                         }
-                        row = row.saturating_sub(1);
+                        row = row.saturating_add_signed(direction.step());
                         col = self.get_line_length(row);
                     }
                 }
