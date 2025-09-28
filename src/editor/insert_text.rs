@@ -20,6 +20,7 @@ impl FumaState {
         self.resize_console()?;
         Ok(())
     }
+
     pub fn insert_newline(&mut self) -> io::Result<()> {
         let (logical_line, logical_column) = self.wrap_result.get_logical_position(self.cursor.y, self.cursor.x)?;
         self.buffer.insert_newline(logical_line, logical_column, &self.cursor);
@@ -30,8 +31,6 @@ impl FumaState {
         self.resize_console()?;
         Ok(())
     }
-
-
 
     pub fn backspace(&mut self) -> io::Result<()> {
         let (logical_line, logical_column) = self.wrap_result
@@ -63,12 +62,6 @@ impl FumaState {
         Ok(())
     }
 
-
-
-
-
-
-
     pub fn delete(&mut self) -> io::Result<()> {
         let (logical_line, logical_column) = self.wrap_result.get_logical_position(self.cursor.y, self.cursor.x)?;
 
@@ -93,11 +86,11 @@ impl FumaState {
 
         self.buffer.delete_line(logical_line);
         self.cursor.x = self.cursor.min_x;
+        self.cursor.last_x = self.cursor.x;
         self.cursor.y = self.wrap_result.get_start_line_wrapped(self.cursor.y).unwrap_or_else(|e|
-            {
-                self.buffer.line_count() - 1
-            });
-        
+            { self.buffer.line_count() - 1 }
+        );
+
 
         self.resize_console()?;
         self.cursor.ensure_visible();
