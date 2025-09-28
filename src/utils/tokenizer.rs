@@ -24,7 +24,7 @@ impl fmt::Display for TokenType {
 }
 
 
-
+#[derive(Clone)]
 pub struct Token2 {
     pub id: usize,
     pub token_type: TokenType,
@@ -100,28 +100,40 @@ impl Token2P {
     }
 }
 
-fn start_new_token(mock_token: &mut Token2P, token_count: &mut usize, gen_token: &mut bool, value_buffer: &mut String) {
+fn start_new_token(mock_token: &mut Token2P, token_count: &mut usize, gen_token: &mut bool, value_buffer: &mut String) -> io::Result<()> {
     *mock_token = Token2P::new();
     *gen_token = true;
     *token_count += 1;
     *value_buffer = String::new();
+    Ok(())
 }
 
-fn start_mock_token(mock_token: &mut Token2P, token_count: usize, inx_col: usize, inx_row: usize) {
+fn start_mock_token(mock_token: &mut Token2P, token_count: usize, inx_col: usize, inx_row: usize) -> io::Result<()> {
     let terminal_left_margin = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
 
     mock_token.id = Some(token_count);
     mock_token.col_start = Some(terminal_left_margin + inx_col);
     mock_token.row_start = Some(inx_row);
+    Ok(())
 }
 
-fn end_mock_token(mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: String, token_type: TokenType) {
+fn end_mock_token(mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: String, token_type: TokenType, tokens: &mut Vec<Token2>) -> io::Result<()> {
     let terminal_left_margin = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
 
     mock_token.value = Some(value_buffer.clone());
     mock_token.col_end = Some(terminal_left_margin + inx_col - 1);
     mock_token.row_end = Some(inx_row);
     mock_token.token_type = Some(token_type);
+
+    tokens.push(Token2::new(mock_token.clone())?);
+
+    Ok(())
+}
+
+fn add_token_and_reset_mock (mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: &mut String, token_type: TokenType, tokens: &mut Vec<Token2>, token_count: &mut usize, gen_token: &mut bool ) -> io::Result<()> {
+    end_mock_token(mock_token, inx_col, inx_row, value_buffer.clone(), token_type, tokens)?;
+    start_new_token(mock_token, token_count, gen_token, value_buffer)?;
+    Ok(())
 }
 pub fn tokenizer2 (wrap_result: &WrapResult) -> io::Result<Vec<Token2>> {
     let wrap_text = wrap_result.wrapped_text.clone();
@@ -139,15 +151,13 @@ pub fn tokenizer2 (wrap_result: &WrapResult) -> io::Result<Vec<Token2>> {
     for (inx_row, line) in wrap_text.iter().enumerate() {
         for (inx_col, c) in line.chars().enumerate() {
             if gen_token {
-                start_mock_token(&mut mock_token, token_count, inx_col, inx_row);
+                start_mock_token(&mut mock_token, token_count, inx_col, inx_row)?;
                 gen_token = false;
             }
             match c {
                 c if c == ' ' => {
                     if !value_buffer.is_empty() {
-                        end_mock_token(&mut mock_token, inx_col, inx_row, value_buffer.clone(), TokenType::Word);
-                        tokens.push(Token2::new(mock_token.clone())?);
-                        start_new_token(&mut mock_token, &mut token_count, &mut gen_token, &mut value_buffer);
+                        add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
                     }
                 },
                 c if c.is_alphanumeric() => {
@@ -155,14 +165,10 @@ pub fn tokenizer2 (wrap_result: &WrapResult) -> io::Result<Vec<Token2>> {
                 },
                 c if !c.is_alphanumeric() => {
                     if !value_buffer.is_empty() {
-                        end_mock_token(&mut mock_token, inx_col, inx_row, value_buffer.clone(), TokenType::Word);
-                        tokens.push(Token2::new(mock_token.clone())?);
-                        start_new_token(&mut mock_token, &mut token_count, &mut gen_token, &mut value_buffer);
+                        add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
                     }
-                    start_mock_token(&mut mock_token, token_count, inx_col, inx_row);
-                    end_mock_token(&mut mock_token, inx_col, inx_row, value_buffer.clone(), TokenType::Symbol);
-                    tokens.push(Token2::new(mock_token.clone())?);
-                    start_new_token(&mut mock_token, &mut token_count, &mut gen_token, &mut value_buffer);
+                    start_mock_token(&mut mock_token, token_count, inx_col, inx_row)?;
+                    add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut c.to_string(), TokenType::Symbol, &mut tokens, &mut token_count, &mut gen_token)?;
                 }
                 _ => {
                     log_error!("Invalid character: {}", c);
@@ -176,7 +182,7 @@ pub fn tokenizer2 (wrap_result: &WrapResult) -> io::Result<Vec<Token2>> {
                 mock_token.col_end = Some(terminal_left_margin + line.len() - 1);
                 mock_token.row_start = Some(inx_row);
                 mock_token.token_type = Some(TokenType::Word);
-                start_new_token(&mut mock_token, &mut token_count, &mut gen_token, &mut value_buffer);
+                start_new_token(&mut mock_token, &mut token_count, &mut gen_token, &mut value_buffer)?;
             }
         }
     }
