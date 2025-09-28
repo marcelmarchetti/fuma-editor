@@ -42,7 +42,7 @@ pub fn log_message(message: &str) -> io::Result<()> {
 
 pub fn log_error(message: &str) -> io::Result<()> {
     log_message(&format!("ERROR: {}", message))?;
-    eprintln!("{}", &format!("ERROR: {}", message));
+    //eprintln!("{}", &format!("ERROR: {}", message));
     Ok(())
 }
 

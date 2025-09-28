@@ -190,7 +190,7 @@ pub fn tokenizer2 (wrap_result: &WrapResult) -> io::Result<Vec<Token2>> {
             match c {
                 c if c == ' ' => {
                     if !value_buffer.is_empty() {
-                        add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
+                        add_token_and_reset_mock(&mut mock_token, inx_col.saturating_sub(1), inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
                     }
                     continue;
                 },

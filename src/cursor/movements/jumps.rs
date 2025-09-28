@@ -50,7 +50,7 @@ impl CursorPos {
                     count += 1;
                 }
                 self.y += count - 1;
-                self.x = self.get_current_line_length() + self.min_x;
+                self.x = self.get_current_line_length();
                 self.last_fast_right = true;
             }
         }

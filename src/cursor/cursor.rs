@@ -23,9 +23,9 @@ pub struct CursorPos {
 impl CursorPos {
     pub fn new(contents: &Vec<String>, wrap_ids: Vec<usize>, tokenized_words: Vec<Token2>) -> Self {
         let lines: &Vec<String> = contents;
-        let line_lengths = lines.iter().map(|l| l.chars().count()).collect();
         let max_y = lines.len().saturating_sub(1);
         let min_x = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
+        let line_lengths = lines.iter().map(|l| l.chars().count() + min_x).collect();
 
         let last_token = if tokenized_words.is_empty() {
             Token2::empty()
@@ -95,7 +95,7 @@ impl CursorPos {
     }
 
     pub(crate) fn clamp_x_to_current_line(&mut self) {
-        let max_x = self.get_current_line_length() + self.min_x;
+        let max_x = self.get_current_line_length();
         if self.last_x > max_x {
             self.x = max_x;
         } else {
