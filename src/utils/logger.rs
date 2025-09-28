@@ -16,16 +16,18 @@ pub fn init_logging() -> io::Result<()> {
         .truncate(true)
         .open("fuma_editor.log")?;
 
+    {
+        let mut log_file = LOG_FILE.lock().map_err(|_| {
+            log_error!("Failed to acquire LOG_FILE lock");
+            io::Error::new(io::ErrorKind::Other, "Failed to acquire LOG_FILE lock")
+        })?;
 
-    let mut log_file = LOG_FILE
-        .lock()
-        .map_err(|_| {
-            log_error!("Failed to acquire PATH lock");
-            io::Error::new(io::ErrorKind::Other, "Failed to acquire LOG_FILE lock") })?;
+        *log_file = Some(file);
+    }
 
-    *log_file = Some(file);
     log_message("=== FUMA EDITOR STARTED ===")
 }
+
 
 pub fn log_message(message: &str) -> io::Result<()> {
     if let Ok(mut log_file) = LOG_FILE.lock() {
