@@ -3,8 +3,8 @@ use std::io::stdout;
 use crossterm::cursor::MoveTo;
 use crossterm::execute;
 use crossterm::style::Print;
-use crate::log_error;
-use crate::utils::tokenizer::{Token, TokenWithPos};
+use crate::{log_debug, log_error};
+use crate::utils::tokenizer::{Token, Token2, TokenWithPos};
 
 #[allow(dead_code)]
 pub fn print_token_with_pos(token: Option<TokenWithPos>) -> io::Result<()>{
@@ -29,6 +29,28 @@ pub fn print_token_with_pos(token: Option<TokenWithPos>) -> io::Result<()>{
     )?;
     Ok(())
 }
+
+pub fn print_token2(token: &Token2) {
+    log_debug!(
+        "[ID: {} | Tipo: {:?} | Valor: '{}' | Col: {}-{} | Row: {}-{}]",
+        token.id,
+        token.token_type,
+        token.value,
+        token.col_start,
+        token.col_end,
+        token.row_start,
+        token.row_end
+    );
+}
+pub fn print_tokens_debug(tokens: &[Token2]) {
+    log_debug!("--- Debug Tokens ---");
+    for token in tokens {
+        print_token2(token);
+    }
+    log_debug!("--- Fin Debug ---");
+}
+
+
 
 pub fn print_token_mapping_result(tokens_with_pos: &Vec<TokenWithPos>) -> io::Result<()>{
     let mut tokens_print: String = "".to_string();

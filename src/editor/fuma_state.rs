@@ -5,7 +5,7 @@ use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
 use crate::editor::text_buffer::TextBuffer;
 use crate::utils::content_wrapper::{wrap_content, WrapResult};
-use crate::utils::tokenizer::{tokenize_text, TokenWithPos};
+use crate::utils::tokenizer::{tokenize_text, tokenizer2, TokenWithPos};
 
 pub(crate) struct FumaState {
     pub cursor: CursorPos,
@@ -21,6 +21,7 @@ impl FumaState {
         let buffer = TextBuffer::from_string(contents);
         let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING)?;
         let tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, DEBUG_TOKENIZER)?;
+        tokenizer2(&wrap_result)?;
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
 
         Ok(Self {
