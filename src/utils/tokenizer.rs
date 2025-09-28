@@ -37,42 +37,49 @@ pub struct Token2 {
 }
 
 impl Token2 {
-    pub fn new(token_provisional: Token2P) -> io::Result<Self> {
+    pub fn new(provisional_token: &Token2P) -> io::Result<Self> {
         Ok(Self {
-            id: token_provisional.id
+            id: provisional_token.id
                 .ok_or_else(|| {
-                log_error!("id missing");
-                io::Error::new(io::ErrorKind::Other, "id missing") })?,
-            token_type: token_provisional.token_type
+                    log_error!("id missing, provisional token: {:?}", provisional_token);
+                    io::Error::new(io::ErrorKind::Other, "id missing")
+                })?,
+            token_type: provisional_token.token_type.clone()
                 .ok_or_else(|| {
-                log_error!("type missing");
-                io::Error::new(io::ErrorKind::Other, "type missing") })?,
-            value: token_provisional.value
+                    log_error!("type missing, provisional token: {:?}", provisional_token);
+                    io::Error::new(io::ErrorKind::Other, "type missing")
+                })?,
+            value: provisional_token.value
+                .as_ref()
+                .cloned()
                 .ok_or_else(|| {
-                log_error!("value missing");
-                io::Error::new(io::ErrorKind::Other, "value missing") })?,
-            col_start: token_provisional
-                .col_start
+                    log_error!("value missing, provisional token: {:?}", provisional_token);
+                    io::Error::new(io::ErrorKind::Other, "value missing")
+                })?,
+            col_start: provisional_token.col_start
                 .ok_or_else(|| {
-                    log_error!("col_start missing");
-                    io::Error::new(io::ErrorKind::Other, "col_start missing") })?,
-            col_end: token_provisional
-                .col_end
+                    log_error!("col_start missing, provisional token: {:?}", provisional_token);
+                    io::Error::new(io::ErrorKind::Other, "col_start missing")
+                })?,
+            col_end: provisional_token.col_end
                 .ok_or_else(|| {
-                    log_error!("col_end missing");
-                    io::Error::new(io::ErrorKind::Other, "col_end missing") })?,
-            row_start: token_provisional
-                .row_start
+                    log_error!("col_end missing, provisional token: {:?}", provisional_token);
+                    io::Error::new(io::ErrorKind::Other, "col_end missing")
+                })?,
+            row_start: provisional_token.row_start
                 .ok_or_else(|| {
-                    log_error!("row_start missing");
-                    io::Error::new(io::ErrorKind::Other, "row_start missing") })?,
-            row_end: token_provisional
-                .row_end
+                    log_error!("row_start missing, provisional token: {:?}", provisional_token);
+                    io::Error::new(io::ErrorKind::Other, "row_start missing")
+                })?,
+            row_end: provisional_token.row_end
                 .ok_or_else(|| {
-                    log_error!("row_end missing");
-                    io::Error::new(io::ErrorKind::Other, "row_end missing") })?,
+                    log_error!("row_end missing, provisional token: {:?}", provisional_token);
+                    io::Error::new(io::ErrorKind::Other, "row_end missing")
+                })?,
         })
     }
+
+
     pub fn empty() -> Self {
         Self {
             id: 0,
@@ -111,6 +118,20 @@ impl Token2P {
     }
 }
 
+impl fmt::Debug for Token2P {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Token2P")
+            .field("id", &self.id)
+            .field("token_type", &self.token_type)
+            .field("value", &self.value)
+            .field("col_start", &self.col_start)
+            .field("col_end", &self.col_end)
+            .field("row_start", &self.row_start)
+            .field("row_end", &self.row_end)
+            .finish()
+    }
+}
+
 fn start_new_token(mock_token: &mut Token2P, token_count: &mut usize, gen_token: &mut bool, value_buffer: &mut String) -> io::Result<()> {
     *mock_token = Token2P::new();
     *gen_token = true;
@@ -136,7 +157,7 @@ fn end_mock_token(mock_token: &mut Token2P, inx_col: usize, inx_row: usize, valu
     mock_token.row_end = Some(inx_row);
     mock_token.token_type = Some(token_type);
 
-    tokens.push(Token2::new(mock_token.clone())?);
+    tokens.push(Token2::new(&mock_token.clone())?);
 
     Ok(())
 }
@@ -171,6 +192,7 @@ pub fn tokenizer2 (wrap_result: &WrapResult) -> io::Result<Vec<Token2>> {
                     if !value_buffer.is_empty() {
                         add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
                     }
+                    continue;
                 },
                 c if c.is_alphanumeric() => {
                     value_buffer.push(c);
