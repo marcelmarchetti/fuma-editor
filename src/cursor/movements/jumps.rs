@@ -56,23 +56,7 @@ impl CursorPos {
         }
 
         self.last_x = self.x;
-
-        let actual_token = if self.use_last_token(direction) {
-            Some(self.last_token.clone())
-        } else {
-            self.get_token(direction)
-        };
-
-        if let Some(token) = actual_token {
-            self.last_token = token;
-        } else {
-            //TODO: Fix tokenization to be able to enable this error
-            //log_error!("Can't get token");
-            //return Err(io::Error::new(io::ErrorKind::Other, "Can't get token"));
-        }
-
         self.clamp_x_to_current_line();
-
         Ok(self.ensure_visible()?)
     }
 
