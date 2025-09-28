@@ -34,8 +34,14 @@ impl KeyBind {
                 "end" => main_key = KeyCode::End,
                 _ => {
                     if key.chars().count() == 1 {
-                        main_key = KeyCode::Char(key.chars().next().unwrap());
-                    } else {
+                        let c = key.chars().next()
+                            .ok_or_else(|| {
+                                log_error!("No bind found for file '{}'", raw);
+                                io::Error::new(io::ErrorKind::InvalidInput, format!("No bind found for file '{}'", raw))
+                            })?;
+
+                        main_key = KeyCode::Char(c);
+                    }else {
                         log_error!("Too many characters in '{}'", raw);
                         return Err(io::Error::new(io::ErrorKind::InvalidInput, format!("Too many characters in '{}'", raw)));
                     }
@@ -137,11 +143,23 @@ pub struct RawKeysConfiguration {
 
 impl RawKeysConfiguration {
     pub fn new(toml_file: &Value) -> io::Result<Self> {
-        let section = toml_file.get("bindings").expect("Missing [bindings] section]");
-        let section_str = toml::to_string(section).unwrap();
-        let raw: RawKeysConfiguration = toml::from_str(&section_str).expect("Failed to parse RawKeysConfiguration");
+        let section = toml_file
+            .get("bindings")
+            .ok_or_else(|| {
+                log_error!("Missing [bindings] section");
+                io::Error::new(io::ErrorKind::InvalidData, "Missing [bindings] section") })?;
+
+        let section_str = toml::to_string(section)
+            .map_err(|e| {
+                log_error!("Failed to serialize bindings: {}", e);
+                io::Error::new(io::ErrorKind::InvalidData, format!("Failed to serialize bindings: {}", e)) })?;
+
+        let raw: RawKeysConfiguration = toml::from_str(&section_str)
+            .map_err(|e| {
+                log_error!("Failed to parse RawKeysConfiguration: {}", e);
+                io::Error::new(io::ErrorKind::InvalidData, format!("Failed to parse RawKeysConfiguration: {}", e)) })?;
+
         Ok(raw)
     }
 }
-
 

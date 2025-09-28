@@ -3,6 +3,7 @@ use std::{io, panic};
 use std::io::Write;
 use std::sync::Mutex;
 use lazy_static::lazy_static;
+use crate::log_error;
 
 lazy_static! {
     static ref LOG_FILE: Mutex<Option<std::fs::File>> = Mutex::new(None);
@@ -16,15 +17,23 @@ pub fn init_logging() -> io::Result<()> {
         .open("fuma_editor.log")?;
 
 
-    *LOG_FILE.lock().unwrap() = Some(file);
+    let mut log_file = LOG_FILE
+        .lock()
+        .map_err(|_| {
+            log_error!("Failed to acquire PATH lock");
+            io::Error::new(io::ErrorKind::Other, "Failed to acquire LOG_FILE lock") })?;
+
+    *log_file = Some(file);
     log_message("=== FUMA EDITOR STARTED ===")
 }
 
 pub fn log_message(message: &str) -> io::Result<()> {
-    if let Some(file) = LOG_FILE.lock().unwrap().as_mut() {
-        let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
-        writeln!(file, "[{}] {}", timestamp, message)?;
-        file.flush()?;
+    if let Ok(mut log_file) = LOG_FILE.lock() {
+        if let Some(file) = log_file.as_mut() {
+            let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
+            writeln!(file, "[{}] {}", timestamp, message)?;
+            file.flush()?;
+        }
     }
     Ok(())
 }

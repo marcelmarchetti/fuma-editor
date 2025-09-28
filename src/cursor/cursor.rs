@@ -75,8 +75,8 @@ impl CursorPos {
         stdout().flush()?;
         Ok(())
     }
-    pub(crate) fn ensure_visible(&mut self) -> bool {
-        let (_, rows) = crossterm::terminal::size().unwrap();
+    pub(crate) fn ensure_visible(&mut self) -> io::Result<bool> {
+        let (_, rows) = crossterm::terminal::size()?;
         let visible_rows = rows as usize;
         let mut did_scroll = false;
 
@@ -90,7 +90,7 @@ impl CursorPos {
             self.vertical_offset = self.y - visible_rows + 1;
             did_scroll = true;
         }
-        did_scroll
+        Ok(did_scroll)
         
     }
 

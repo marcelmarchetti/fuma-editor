@@ -52,20 +52,20 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
             if let Some(action) = keymap.get(&(code, modifiers)) {
                 match action {
                     Action::Quit => return Ok(false),
-                    Action::MoveUp => if state.cursor.move_up() { state.redraw()?; },
-                    Action::MoveDown => if state.cursor.move_down() { state.redraw()?; },
+                    Action::MoveUp => if state.cursor.move_up()? { state.redraw()?; },
+                    Action::MoveDown => if state.cursor.move_down()? { state.redraw()?; },
                     Action::MoveLeft => state.cursor.move_left(),
                     Action::MoveRight => state.cursor.move_right(),
                     Action::MoveToStart => state.cursor.move_start(),
                     Action::MoveToEnd => state.cursor.move_end(),
-                    Action::MoveTokenLeft => state.cursor.move_by_token(Direction::Left),
-                    Action::MoveTokenRight => state.cursor.move_by_token(Direction::Right),
+                    Action::MoveTokenLeft => state.cursor.move_by_token(Direction::Left)?,
+                    Action::MoveTokenRight => state.cursor.move_by_token(Direction::Right)?,
                     Action::GetToken => { _ = state.cursor.get_token_on_cursor(); },
                     Action::TokenizeText => state.tokenize_text()?,
-                    Action::MoveStartLine => if state.cursor.move_start_line() {state.redraw()? },
-                    Action::MoveEndLine =>  if state.cursor.move_end_line() {state.redraw()? },
+                    Action::MoveStartLine => if state.cursor.move_start_line()? {state.redraw()? },
+                    Action::MoveEndLine =>  if state.cursor.move_end_line()? {state.redraw()? },
                     Action::DeleteLine => state.delete_line()?,
-                    Action::SaveFile => { state.buffer.save_to_file(&PATH.lock().unwrap().clone().unwrap())?; }
+                    Action::SaveFile => { state.buffer.save_to_file()? }
                 }
             } else if let KeyCode::Char(c) = code {
                 if modifiers.is_empty() || modifiers==KeyModifiers::NONE {

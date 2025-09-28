@@ -38,7 +38,7 @@ impl WrapResult {
             }
 
         }
-
+        log_error!("Wrapped line not found");
         Err(io::Error::new(io::ErrorKind::NotFound, "Wrapped line not found"))
 
     }

@@ -1,23 +1,24 @@
+use std::io;
 use crate::cursor::cursor::CursorPos;
 
 impl CursorPos {
     
-    pub fn move_up(&mut self) -> bool {
+    pub fn move_up(&mut self) -> io::Result<bool> {
         if self.y > 0 {
             self.y -= 1;
             self.clamp_x_to_current_line();
             return self.ensure_visible();
 
         }
-        false
+        Ok(false)
     }
-    pub fn move_down(&mut self) -> bool {
+    pub fn move_down(&mut self) -> io::Result<bool> {
         if self.y < self.max_y {
             self.y += 1;
             self.clamp_x_to_current_line();
             return self.ensure_visible()
         }
-        false
+        Ok(false)
     }
     pub fn move_right(&mut self) {
         let max_x = self.get_current_line_length() + self.min_x;

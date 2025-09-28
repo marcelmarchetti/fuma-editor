@@ -1,9 +1,9 @@
 use std::{fs, io};
 use std::io::Write;
 use std::path::Path;
-use crate::values::globals::TERMINAL_RIGHT_MARGIN;
+use crate::values::globals::{PATH, TERMINAL_RIGHT_MARGIN};
 use crate::cursor::cursor::CursorPos;
-use crate::log_debug;
+use crate::{log_debug, log_error};
 
 pub struct TextBuffer {
     pub lines: Vec<String>,
@@ -58,9 +58,9 @@ impl TextBuffer {
         self.lines.len()
     }
 
-    pub fn insert_newline(&mut self, line: usize, col: usize, cursor: &CursorPos) {
+    pub fn insert_newline(&mut self, line: usize, col: usize, cursor: &CursorPos) -> io::Result<()> {
 
-        let (cols, _) = crossterm::terminal::size().unwrap();
+        let (cols, _) = crossterm::terminal::size()?;
         if line < self.line_count() {
             let current = self.lines[line].clone();
             let (before, after) = current.split_at(col);
@@ -71,10 +71,10 @@ impl TextBuffer {
                 self.lines.insert(line + 1, "".to_string());
             }
 
-
         } else {
             self.lines.push(String::new());
         }
+        Ok(())
     }
 
     pub fn backspace(&mut self, line: usize, col: usize) -> bool {
@@ -126,7 +126,18 @@ impl TextBuffer {
         }
     }
 
-    pub fn save_to_file(&self, path: &Path) -> io::Result<()> {
+    pub fn save_to_file(&self) -> io::Result<()> {
+        let path = PATH
+            .lock()
+            .map_err(|_| {
+                log_error!("Failed to acquire PATH lock");
+                io::Error::new(io::ErrorKind::Other, "Failed to acquire PATH lock")
+            })?
+            .clone()
+            .ok_or_else(|| {
+                log_error!("No path set");
+                io::Error::new(io::ErrorKind::Other, "No path set")
+            })?;
         let content = self.to_string();
         let mut file = fs::File::create(path)?;
         file.write_all(content.as_bytes())?;

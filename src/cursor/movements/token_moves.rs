@@ -1,4 +1,6 @@
+use std::io;
 use crate::cursor::cursor::CursorPos;
+use crate::log_error;
 use crate::utils::direction::Direction;
 use crate::utils::tokenizer::TokenWithPos;
 
@@ -94,7 +96,7 @@ impl CursorPos {
             Direction::Left => self.last_fast_right && self.cursor_in_last_token(),
         }
     }
-    pub fn move_by_token(&mut self, direction: Direction) {
+    pub fn move_by_token(&mut self, direction: Direction) -> io::Result<()> {
         let actual_token: Option<TokenWithPos> = if self.use_last_token(direction) {
             Some(self.last_token.clone())
         } else {
@@ -103,24 +105,52 @@ impl CursorPos {
 
         if let Some(token) = actual_token {
             if token.token.is_none() {
-                self.x = 0;
+                self.x = self.min_x;
             } else {
                 match direction {
                     Direction::Right => {
-                        self.x = token.col_end.unwrap().saturating_add(1);
-                        self.y = token.row_end.unwrap();
+                        self.x = token.col_end
+                            .ok_or_else(|| {
+                                let error = io::Error::new(io::ErrorKind::Other, "col_end is None");
+                                log_error!("{}", error);
+                                return error
+
+                            })?
+                            .saturating_add(1);
+                        self.y = token.row_end
+                            .ok_or_else(|| {
+                                let error = io::Error::new(io::ErrorKind::Other, "row_end is None");
+                                log_error!("{}", error);
+                                return error
+
+                            })?;
                         self.last_fast_right = true;
                     }
                     Direction::Left => {
-                        self.x = token.col_start.unwrap().saturating_sub(1).max(self.min_x);
-                        self.y = token.row_start.unwrap();
+                        self.x = token.col_start
+                            .ok_or_else(|| {
+                                let error = io::Error::new(io::ErrorKind::Other, "col_start is None");
+                                log_error!("{}", error);
+                                return error
+
+                            })?
+                            .saturating_sub(1)
+                            .max(self.min_x);
+                        self.y = token.row_start
+                            .ok_or_else(|| {
+                                let error = io::Error::new(io::ErrorKind::Other, "row_start is None");
+                                log_error!("{}", error);
+                                return error
+
+                            })?;
                         self.last_fast_right = false;
                     }
                 }
             }
             self.last_x = self.x;
+            Ok(())
         } else {
-            return
+            Ok(())
         }
     }
 }

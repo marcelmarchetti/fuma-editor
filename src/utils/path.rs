@@ -28,7 +28,10 @@ pub fn get_route() -> io::Result<PathBuf> {
 
     let normalized = normalize_path(&resolved);
 
-    let mut global = PATH.lock().unwrap();
+    let mut global = PATH.lock().map_err(|_|
+        {
+            log_error!("Failed to acquire PATH lock");
+            io::Error::new(io::ErrorKind::Other, "Failed to acquire PATH lock") })?;;
     *global = Some(normalized.clone());
 
     Ok(normalized)
