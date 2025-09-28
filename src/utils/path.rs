@@ -31,7 +31,7 @@ pub fn get_route() -> io::Result<PathBuf> {
     let mut global = PATH.lock().map_err(|_|
         {
             log_error!("Failed to acquire PATH lock");
-            io::Error::new(io::ErrorKind::Other, "Failed to acquire PATH lock") })?;;
+            io::Error::new(io::ErrorKind::Other, "Failed to acquire PATH lock") })?;
     *global = Some(normalized.clone());
 
     Ok(normalized)
@@ -82,6 +82,7 @@ fn normalize_path(path: &Path) -> PathBuf {
     normalized
 }
 
+#[allow(dead_code, unused_variables)]
 pub fn validate_filename_arg(arg: &str) -> Result<(), String> {
     /*
     if arg.is_empty() {

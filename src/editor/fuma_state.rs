@@ -20,7 +20,7 @@ impl FumaState {
         
         let buffer = TextBuffer::from_string(contents);
         let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING)?;
-        let tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, DEBUG_TOKENIZER);
+        let tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, DEBUG_TOKENIZER)?;
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
 
         Ok(Self {
@@ -43,7 +43,7 @@ impl FumaState {
     }
 
     pub(crate) fn tokenize_text(&mut self) -> io::Result<()> {
-        self.tokenized_words = tokenize_text(&self.wrap_result.wrapped_text, &self.wrap_result.wrap_ids, DEBUG_TOKENIZER);
+        self.tokenized_words = tokenize_text(&self.wrap_result.wrapped_text, &self.wrap_result.wrap_ids, DEBUG_TOKENIZER)?;
 
         Ok(())
     }
@@ -60,7 +60,7 @@ impl FumaState {
         self.wrap_content()?;
 
 
-        if (TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed) != self.cursor.min_x) {
+        if TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed) != self.cursor.min_x {
             self.cursor.x = self.cursor.x.saturating_add_signed(TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed) as isize - self.cursor.min_x as isize);
             self.cursor.last_x = self.cursor.x;
         }

@@ -1,6 +1,5 @@
 use std::{fs, io};
 use std::io::Write;
-use std::path::Path;
 use crate::values::globals::{PATH, TERMINAL_RIGHT_MARGIN};
 use crate::cursor::cursor::CursorPos;
 use crate::{log_debug, log_error};

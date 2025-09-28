@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, io};
 use std::sync::atomic::Ordering;
 use crate::utils::debug::{print_token_mapping_result, print_tokenize_result};
 use crate::values::globals::TERMINAL_LEFT_MARGIN;
@@ -55,7 +55,7 @@ fn generate_token(value: &String, id: usize,  token_type: TokenType) -> Token {
     }
 }
 
-pub fn tokenize_text(wrapped_content: &Vec<String>, wrap_ids: &Vec<usize>, debug:bool) -> Vec<TokenWithPos>{
+pub fn tokenize_text(wrapped_content: &Vec<String>, wrap_ids: &Vec<usize>, debug:bool) -> io::Result<Vec<TokenWithPos>>{
     let mut tokens: Vec<Token> = Vec::new();
     let mut token_buffer: String = String::new();
     let mut row_index:usize = 0;
@@ -94,13 +94,13 @@ pub fn tokenize_text(wrapped_content: &Vec<String>, wrap_ids: &Vec<usize>, debug
     }
     
     if debug {
-        print_tokenize_result(wrapped_content, &tokens);
+        print_tokenize_result(wrapped_content, &tokens)?;
     }
     
-    map_tokens(wrapped_content, tokens, debug)
+    Ok(map_tokens(wrapped_content, tokens, debug)?)
 }
 
-pub fn map_tokens(content: &Vec<String>, tokens: Vec<Token>, debug: bool) -> Vec<TokenWithPos> {
+pub fn map_tokens(content: &Vec<String>, tokens: Vec<Token>, debug: bool) -> io::Result<Vec<TokenWithPos>> {
     let mut token_index = 0;
     let mut tokens_with_pos: Vec<TokenWithPos> = Vec::new();
     let lines: Vec<String> = content.clone();
@@ -184,8 +184,8 @@ pub fn map_tokens(content: &Vec<String>, tokens: Vec<Token>, debug: bool) -> Vec
     }
 
     if debug {
-        print_token_mapping_result(&tokens_with_pos);
+        print_token_mapping_result(&tokens_with_pos)?;
     }
 
-    tokens_with_pos
+    Ok(tokens_with_pos)
 }

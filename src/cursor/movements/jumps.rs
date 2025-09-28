@@ -1,7 +1,5 @@
 use std::io;
-use std::io::Error;
 use crate::cursor::cursor::CursorPos;
-use crate::log_error;
 use crate::utils::direction::Direction;
 
 impl CursorPos {

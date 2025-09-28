@@ -4,7 +4,6 @@ use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crate::editor::configuration::bindings::KeysConfiguration;
 use crate::editor::fuma_state::FumaState;
 use crate::utils::direction::Direction;
-use crate::values::globals::PATH;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Action {
