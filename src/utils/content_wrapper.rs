@@ -1,6 +1,6 @@
 use std::io;
 use std::sync::atomic::Ordering;
-use crate::values::globals::{SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN, TERMINAL_RIGHT_MARGIN};
+use crate::values::globals::{SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN, TERMINAL_NUMBERING_DELIMITATOR_SEPARATION, TERMINAL_RIGHT_MARGIN};
 use crate::log_error;
 use crate::utils::debug::print_wrapper_values;
 
@@ -15,6 +15,32 @@ impl WrapResult {
             log_error!("Wrapped row not found");
             io::Error::new(io::ErrorKind::NotFound, "Wrapped row not found")
         })
+    }
+
+    pub fn get_start_line_wrapped(&self, cursor_y: usize) -> io::Result<usize> {
+        let mut line_wrapped_id = 0;
+        let mut last_seen_id_first: usize = 0;
+        let mut last_seen_line_start = 0;
+        let mut found = false;
+
+        for (line, &id) in self.wrap_ids.iter().enumerate() {
+            if line == cursor_y {
+                line_wrapped_id = id;
+                found = true;
+            }
+            if id != last_seen_id_first{
+                last_seen_line_start = line;
+                last_seen_id_first = id;
+            }
+
+            if last_seen_id_first == line_wrapped_id && found {
+                return Ok(last_seen_line_start);
+            }
+
+        }
+
+        Err(io::Error::new(io::ErrorKind::NotFound, "Wrapped line not found"))
+
     }
     
     pub fn get_logical_position(&mut self, wrapped_y: usize, wrapped_x: usize) -> io::Result<(usize, usize)> {
@@ -80,11 +106,10 @@ impl WrapResult {
 
 pub fn wrap_content(content: &str, debug: bool) -> io::Result<WrapResult> {
     if SHOW_LINE_NUMBERING.load(Ordering::Relaxed) {
-        TERMINAL_LEFT_MARGIN.store(content.lines().count().to_string().len() + 1, Ordering::Relaxed);
+        TERMINAL_LEFT_MARGIN.store(content.lines().count().to_string().len() + TERMINAL_NUMBERING_DELIMITATOR_SEPARATION + 1, Ordering::Relaxed);
     } else {
         TERMINAL_LEFT_MARGIN.store(0, Ordering::Relaxed);
     }
-
 
     let (width, _) = crossterm::terminal::size()?;
     let effective_width = width.saturating_sub(

@@ -1,5 +1,6 @@
 use std::io;
-use crate::values::globals::{DEBUG_TOKENIZER, DEBUG_WRAPPING};
+use std::sync::atomic::Ordering;
+use crate::values::globals::{DEBUG_TOKENIZER, DEBUG_WRAPPING, TERMINAL_LEFT_MARGIN};
 use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
 use crate::editor::text_buffer::TextBuffer;
@@ -57,6 +58,13 @@ impl FumaState {
     }
     pub(crate) fn resize_console(&mut self) -> io::Result<()> {
         self.wrap_content()?;
+
+
+        if (TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed) != self.cursor.min_x) {
+            self.cursor.x = self.cursor.x.saturating_add_signed(TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed) as isize - self.cursor.min_x as isize);
+            self.cursor.last_x = self.cursor.x;
+        }
+
         let old_cursor_state = (self.cursor.x, self.cursor.y, self.cursor.last_x, self.cursor.vertical_offset);
         self.tokenize_text()?;
         self.new_cursor_pos()?;

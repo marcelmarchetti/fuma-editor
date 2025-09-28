@@ -1,5 +1,6 @@
 use crate::values::globals::TERMINAL_RIGHT_MARGIN;
 use crate::cursor::cursor::CursorPos;
+use crate::log_debug;
 
 pub struct TextBuffer {
     pub lines: Vec<String>,
@@ -7,7 +8,8 @@ pub struct TextBuffer {
 
 impl TextBuffer {
     pub fn from_string(text: String) -> Self {
-        let lines = text.lines().map(|l| l.to_string()).collect();
+        let mut lines:Vec<String> = text.lines().map(|l| l.to_string()).collect();
+        lines.push(String::new());
         Self { lines }
     }
 
@@ -57,7 +59,7 @@ impl TextBuffer {
             self.lines[line] = before.to_string();
             self.lines.insert(line + 1, after.to_string());
 
-            if (cursor.x == 0 || cursor.x as u16 == cols as u16 - TERMINAL_RIGHT_MARGIN as u16) && !before.is_empty() && !after.is_empty() {
+            if (cursor.x == 0 || cursor.x as u16 == cols - TERMINAL_RIGHT_MARGIN as u16) && !before.is_empty() && !after.is_empty() {
                 self.lines.insert(line + 1, "".to_string());
             }
 
@@ -82,19 +84,37 @@ impl TextBuffer {
         false
     }
 
-    pub fn delete(&mut self, line: usize, col: usize) -> bool {
-        if line < self.line_count() {
+    pub fn delete(&mut self, line: usize, col: usize) {
+        let line_count = self.line_count();
+
+        if line < line_count {
             let char_count = self.lines[line].chars().count();
 
             if col < char_count {
                 self.remove_char(line, col);
-                return false;
-            } else if line + 1 < self.line_count() {
+
+                if line == line_count - 1 && col == 0 {
+                    self.lines.push(String::new());
+                }
+            } else if line + 1 < line_count - 1 {
                 let next_line = self.lines.remove(line + 1);
                 self.lines[line].push_str(&next_line);
-                return true;
             }
         }
-        false
+    }
+
+    pub fn delete_line(&mut self, line: usize) {
+
+        if self.line_count() > line {
+            self.lines.remove(line);
+        }
+
+        log_debug!("delete_line: {}", line);
+        log_debug!("count - 1: {}", self.line_count() - 1);
+        log_debug!("entra: {}", self.line_count() == 1 || self.line_count() - 1 == line ||  self.line_count() == line );
+
+        if self.line_count() == 1 || self.line_count() - 1 == line ||  self.line_count() == line {
+            self.lines.push(String::new());
+        }
     }
 }

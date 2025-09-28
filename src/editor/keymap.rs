@@ -20,6 +20,7 @@ pub enum Action {
     TokenizeText,
     MoveStartLine,
     MoveEndLine,
+    DeleteLine,
 }
 
 pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifiers), Action> {
@@ -37,6 +38,7 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.tokenize_text.main_key, config.tokenize_text.modifier_key), Action::TokenizeText);
     map.insert((config.move_start_line.main_key, config.move_start_line.modifier_key), Action::MoveStartLine);
     map.insert((config.move_end_line.main_key, config.move_end_line.modifier_key), Action::MoveEndLine);
+    map.insert((config.delete_line.main_key, config.delete_line.modifier_key), Action::DeleteLine);
     map
 }
 
@@ -59,6 +61,7 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                     Action::TokenizeText => state.tokenize_text()?,
                     Action::MoveStartLine => if state.cursor.move_start_line() {state.redraw()? },
                     Action::MoveEndLine =>  if state.cursor.move_end_line() {state.redraw()? },
+                    Action::DeleteLine => state.delete_line()?,
                 }
             } else if let KeyCode::Char(c) = code {
                 if modifiers.is_empty() || modifiers==KeyModifiers::NONE {

@@ -47,7 +47,7 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
                 last_wrapped_inx = state.wrap_result.wrap_ids[start + i];
 
                 let mut margin_print = state.wrap_result.wrap_ids[start + i].to_string();
-                while margin_print.len() < index_spacing - 1  {
+                while margin_print.len() < index_spacing - 1 {
                     margin_print.push(' ');
                 }
 
@@ -77,7 +77,3 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
 
     Ok(())
 }
-
-
-
-

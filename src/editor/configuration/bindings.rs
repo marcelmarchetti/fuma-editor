@@ -66,6 +66,7 @@ pub struct KeysConfiguration {
     pub tokenize_text: KeyBind,
     pub move_start_line: KeyBind,
     pub move_end_line: KeyBind,
+    pub delete_line: KeyBind,
 }
 
 impl KeysConfiguration {
@@ -84,6 +85,7 @@ impl KeysConfiguration {
             tokenize_text: KeyBind::from_raw(&raw.tokenize_text).unwrap_or_else(|_| KeysConfiguration::default().tokenize_text),
             move_start_line: KeyBind::from_raw(&raw.move_start_line).unwrap_or_else(|_| KeysConfiguration::default().move_start_line),
             move_end_line: KeyBind::from_raw(&raw.move_end_line).unwrap_or_else(|_| KeysConfiguration::default().move_end_line),
+            delete_line: KeyBind::from_raw(&raw.delete_line).unwrap_or_else(|_| KeysConfiguration::default().delete_line),
         }
     }
     pub fn from_toml(toml_file: &Value) -> io::Result<Self> {
@@ -105,6 +107,7 @@ impl KeysConfiguration {
             tokenize_text: KeyBind::new(KeyCode::Char('t'), KeyModifiers::NONE),
             move_start_line: KeyBind::new(KeyCode::Char('h'), KeyModifiers::CONTROL),
             move_end_line: KeyBind::new(KeyCode::Char('l'), KeyModifiers::CONTROL),
+            delete_line: KeyBind::new(KeyCode::Char('d'), KeyModifiers::CONTROL),
         }
     }
 }
@@ -124,6 +127,7 @@ pub struct RawKeysConfiguration {
     pub tokenize_text: String,
     pub move_start_line: String,
     pub move_end_line: String,
+    pub delete_line: String,
 }
 
 impl RawKeysConfiguration {

@@ -4,7 +4,7 @@ use toml::Value;
 use crate::{log_debug, log_error, log_info};
 use crate::editor::configuration::bindings::{KeysConfiguration};
 use crate::editor::configuration::editor::EditorConfiguration;
-use crate::values::globals::SHOW_LINE_NUMBERING;
+use crate::values::globals::{SHOW_LINE_NUMBERING};
 
 pub struct Configuration {
     pub bindings: KeysConfiguration,
@@ -28,6 +28,7 @@ impl Configuration {
     }
     pub fn apply_configuration(self) {
         SHOW_LINE_NUMBERING.store(self.editor.line_numbering, Ordering::Relaxed);
+
     }
 }
 
