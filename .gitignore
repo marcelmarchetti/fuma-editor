@@ -5,3 +5,4 @@ src/test/
 config.json
 fuma_editor.log
 config.toml
+/tests

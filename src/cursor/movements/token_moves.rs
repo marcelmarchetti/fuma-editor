@@ -5,6 +5,27 @@ use crate::utils::debug::print_token2;
 use crate::utils::direction::Direction;
 use crate::utils::tokenizer::Token2;
 
+impl Token2 {
+    pub fn contains(&self, row: usize, col: usize) -> bool {
+        if self.row_start == self.row_end {
+            return self.row_start == row && (self.col_start..=self.col_end).contains(&col);
+        }
+
+        if row > self.row_start && row < self.row_end {
+            return true;
+        }
+
+        if row == self.row_start {
+            return col >= self.col_start;
+        }
+
+        if row == self.row_end {
+            return col <= self.col_end;
+        }
+        false
+    }
+}
+
 
 impl CursorPos {
     pub fn get_token_on_cursor(&self) -> Option<Token2> {
@@ -41,30 +62,49 @@ impl CursorPos {
             Direction::Left => self.last_fast_right && self.cursor_in_last_token(),
         }
     }
-    pub fn get_token2(&self, direction: Direction) -> io::Result<Token2> {
-        let mut move_buffer = self.x;
-        let line_length = self.get_current_line_length();
+    pub fn get_token2(&mut self, direction: Direction) -> io::Result<&Token2> {
+        let mut col = self.x;
+        let mut row = self.y;
+        let wrap_id = self.wrap_ids[self.y];
 
-        while move_buffer >= self.min_x && move_buffer <= line_length{
-            for token in self.tokenized_words.iter() {
-                if (token.col_start..=token.col_end).contains(&move_buffer) && (token.row_start..=token.row_end).contains(&self.y) ||
-                    (token.row_start < self.y && token.row_end > self.y) ||
-                    (token.row_start == self.y && token.col_start <= move_buffer && token.row_end > self.y) ||
-                    (token.row_end == self.y && token.col_end >= move_buffer && token.row_start < self.y){
-                    print_token2(token);
-                    return match direction {
-                        Direction::Right => Ok(token.clone()),
-                        Direction::Left => Ok(token.clone()),
+        loop {
+            let line_length = self.get_line_length(row);
+            if let Some(token) = self.tokenized_words.iter().find(|t| t.contains(row, col)) {
+                return Ok(token);
+            }
+
+            match direction {
+                Direction::Right => {
+                    if col < line_length {
+                        col += 1;
+                    } else {
+                        row += 1;
+                        if row >= self.wrap_ids.len() || self.wrap_ids[row] != wrap_id {
+                            break;
+                        }
+                        col = self.min_x;
+                    }
+                }
+                Direction::Left => {
+                    if col > self.min_x {
+                        col = col.saturating_sub(1);
+                    } else {
+                        if row == 0 || self.wrap_ids[row - 1] != wrap_id {
+                            break;
+                        }
+                        row = row.saturating_sub(1);
+                        col = self.get_line_length(row);
                     }
                 }
             }
-            match direction {
-                Direction::Right => move_buffer += 1,
-                Direction::Left => move_buffer = move_buffer.saturating_sub(1),
-            }
         }
-        Err(io::Error::new(io::ErrorKind::NotFound, format!("Token not found. Buffer ended at {}. Line length: {}", move_buffer, line_length)))
+
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("Token not found. Buffer ended at row {}, col {}", row, col),
+        ))
     }
+
 
 
     pub fn move_by_token2(&mut self, direction: Direction) -> io::Result<()> {
@@ -76,13 +116,6 @@ impl CursorPos {
                 Err(e) => {
                     log_info!("Token not found. Cursor x: {} Cursor y: {}, Direction: {}, {}",self.x,self.y,direction, e);
                     return Ok(());
-                    /*
-                    return Err(io::Error::new(io::ErrorKind::NotFound,
-                          format!("Token not found. Cursor x: {} Cursor y: {}, Direction: {}", self.x, self.y, direction
-                        ),
-                    ));
-
-                     */
                 }
             }
         };
