@@ -5,13 +5,13 @@ use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
 use crate::editor::text_buffer::TextBuffer;
 use crate::utils::content_wrapper::{wrap_content, WrapResult};
-use crate::utils::tokenizer::{tokenize_text, tokenizer2, TokenWithPos};
+use crate::utils::tokenizer::{tokenizer2, Token2};
 
 pub(crate) struct FumaState {
     pub cursor: CursorPos,
     pub wrap_result: WrapResult,
     pub buffer: TextBuffer,
-    pub tokenized_words: Vec<TokenWithPos>
+    pub tokenized_words: Vec<Token2>
 }
 
 impl FumaState {
@@ -20,7 +20,7 @@ impl FumaState {
         
         let buffer = TextBuffer::from_string(contents);
         let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING)?;
-        let tokenized_words = tokenize_text(&wrap_result.wrapped_text, &wrap_result.wrap_ids, DEBUG_TOKENIZER)?;
+        let tokenized_words = tokenizer2(&wrap_result)?;
         tokenizer2(&wrap_result)?;
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
 
@@ -44,7 +44,7 @@ impl FumaState {
     }
 
     pub(crate) fn tokenize_text(&mut self) -> io::Result<()> {
-        self.tokenized_words = tokenize_text(&self.wrap_result.wrapped_text, &self.wrap_result.wrap_ids, DEBUG_TOKENIZER)?;
+        self.tokenized_words = tokenizer2(&self.wrap_result)?;
 
         Ok(())
     }
