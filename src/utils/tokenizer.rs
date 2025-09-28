@@ -168,7 +168,7 @@ fn add_token_and_reset_mock (mock_token: &mut Token2P, inx_col: usize, inx_row: 
     *gen_token = true;
     Ok(())
 }
-pub fn tokenizer2 (wrap_result: &WrapResult) -> io::Result<Vec<Token2>> {
+pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Token2>> {
     let wrap_text = wrap_result.wrapped_text.clone();
     let wrap_ids = wrap_result.wrap_ids.clone();
 
@@ -220,8 +220,6 @@ pub fn tokenizer2 (wrap_result: &WrapResult) -> io::Result<Vec<Token2>> {
             }
         }
     }
-
-    print_tokens_debug(&tokens);
-
+    if debug { print_tokens_debug(&tokens); }
     Ok(tokens)
 }

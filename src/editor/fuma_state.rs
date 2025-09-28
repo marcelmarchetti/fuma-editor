@@ -20,8 +20,7 @@ impl FumaState {
         
         let buffer = TextBuffer::from_string(contents);
         let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING)?;
-        let tokenized_words = tokenizer2(&wrap_result)?;
-        tokenizer2(&wrap_result)?;
+        let tokenized_words = tokenizer2(&wrap_result, DEBUG_TOKENIZER)?;
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
 
         Ok(Self {
@@ -44,7 +43,7 @@ impl FumaState {
     }
 
     pub(crate) fn tokenize_text(&mut self) -> io::Result<()> {
-        self.tokenized_words = tokenizer2(&self.wrap_result)?;
+        self.tokenized_words = tokenizer2(&self.wrap_result, DEBUG_TOKENIZER)?;
 
         Ok(())
     }
