@@ -1,9 +1,9 @@
-use std::io;
+use std::{fs, io};
 use std::io::stdout;
+use std::path::PathBuf;
 use crossterm::execute;
 use crossterm::terminal::{enable_raw_mode, EnterAlternateScreen};
-use crate::log_error;
-use crate::utils::files::read_file;
+use crate::{log_error, log_info};
 use crate::utils::path::get_route;
 
 pub fn try_enter_alternate_screen() -> io::Result<()> {
@@ -21,11 +21,20 @@ pub fn try_enable_raw_mode() -> io::Result<()> {
     Ok(())
 }
 
+
 pub fn try_read_file() -> io::Result<String> {
-    let content = read_file(&get_route());
-    if let Err(e) =  content {
-        log_error!("Error reading file {}", e);
-        return Err(e);
+    let path: PathBuf = get_route()?;
+
+    if !path.exists() {
+        log_info!("File does not exist: {}", path.to_string_lossy());
+        return Ok(String::new());
     }
-    content
+
+    match fs::read_to_string(&path) {
+        Ok(content) => Ok(content),
+        Err(e) => {
+            log_error!("Error reading file {}: {}", path.to_string_lossy(), e);
+            Err(e)
+        }
+    }
 }

@@ -10,6 +10,11 @@ impl TextBuffer {
     pub fn from_string(text: String) -> Self {
         let mut lines:Vec<String> = text.lines().map(|l| l.to_string()).collect();
         lines.push(String::new());
+
+        if lines.len() == 1 {
+            lines.push(String::new());
+        }
+
         Self { lines }
     }
 

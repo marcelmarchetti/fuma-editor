@@ -190,6 +190,7 @@ dependencies = [
  "crossterm",
  "dirs",
  "lazy_static",
+ "once_cell",
  "regex",
  "serde",
  "toml",

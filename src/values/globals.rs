@@ -1,4 +1,7 @@
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicUsize};
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
 
 pub const DEBUG_WRAPPING: bool = false;
 //pub const DEBUG_SCREEN_RENDER: bool = false;
@@ -13,3 +16,5 @@ pub static TERMINAL_NUMBERING_DELIMITATOR_SEPARATION: usize = 1;
 pub static SHOW_LINE_NUMBERING: AtomicBool = AtomicBool::new(true);
 
 pub const DELIMITATOR: char = '│';
+
+pub static PATH: Lazy<Mutex<Option<PathBuf>>> = Lazy::new(|| Mutex::new(None));

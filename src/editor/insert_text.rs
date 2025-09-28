@@ -12,7 +12,7 @@ impl FumaState {
         self.cursor.x += 1;
 
         if self.cursor.x >= cols as usize - TERMINAL_RIGHT_MARGIN + 1{
-            self.cursor.x = self.cursor.min_x;
+            self.cursor.x = self.cursor.min_x + 1;
             self.cursor.y += 1;
         }
 
