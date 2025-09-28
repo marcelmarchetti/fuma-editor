@@ -56,6 +56,6 @@ pub fn log_info(message: &str) -> io::Result<()> {
 
 pub fn set_panic_hook() {
     panic::set_hook(Box::new(|panic_info| {
-        let _ = log_error(&format!("PANIC: {}", panic_info));
+        log_error!("PANIC: {}", panic_info);
     }))
 }
