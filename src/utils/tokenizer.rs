@@ -169,11 +169,6 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
     let wrap_text = &wrap_result.wrapped_text;
     let wrap_ids = &wrap_result.wrap_ids;
 
-    for line in wrap_text {
-        log_debug!("{}", line);
-    }
-
-
     let mut tokens: Vec<Token2> = Vec::new();
     let mut value_buffer = String::new();
     let mut token_count: usize = 0;
@@ -235,6 +230,11 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
         tokens.push(Token2::new(&mock_token)?);
     }
 
-    if debug { print_tokens_debug(&tokens); }
+    if debug {
+        for line in wrap_text {
+            log_debug!("{}", line);
+        }
+        print_tokens_debug(&tokens);
+    }
     Ok(tokens)
 }
