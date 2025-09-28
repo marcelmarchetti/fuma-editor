@@ -41,7 +41,7 @@ impl CursorPos {
             Direction::Left => self.last_fast_right && self.cursor_in_last_token(),
         }
     }
-    pub fn get_token2(&mut self, direction: Direction) -> io::Result<&Token2> {
+    pub fn get_token2(&self, direction: Direction) -> io::Result<Token2> {
         let mut move_buffer = self.x;
         let line_length = self.get_current_line_length();
 
@@ -53,8 +53,8 @@ impl CursorPos {
                     (token.row_end == self.y && token.col_end >= move_buffer && token.row_start < self.y){
                     print_token2(token);
                     return match direction {
-                        Direction::Right => Ok(token),
-                        Direction::Left => Ok(token),
+                        Direction::Right => Ok(token.clone()),
+                        Direction::Left => Ok(token.clone()),
                     }
                 }
             }
@@ -74,15 +74,15 @@ impl CursorPos {
             match self.get_token2(direction) {
                 Ok(t) => t.clone(),
                 Err(e) => {
-                    if self.x == self.get_current_line_length() {
-                        log_info!("Token not found. Most likely because EOL. Cursor x: {}, Line length: {}", self.x, self.get_current_line_length());
-                        return Ok(());
-                    }
-                    log_info!("Token not found. Cursor x: {} Cursor y: {}, Direction: {}",self.x,self.y,direction);
+                    log_info!("Token not found. Cursor x: {} Cursor y: {}, Direction: {}, {}",self.x,self.y,direction, e);
+                    return Ok(());
+                    /*
                     return Err(io::Error::new(io::ErrorKind::NotFound,
                           format!("Token not found. Cursor x: {} Cursor y: {}, Direction: {}", self.x, self.y, direction
                         ),
                     ));
+
+                     */
                 }
             }
         };

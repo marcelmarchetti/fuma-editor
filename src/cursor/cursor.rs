@@ -18,11 +18,12 @@ pub struct CursorPos {
     pub(crate) tokenized_words: Vec<Token2>,
     pub(crate) last_token: Token2,
     pub(crate) last_fast_right: bool,
+    pub wrapped_text: Vec<String>
 }
 
 impl CursorPos {
-    pub fn new(contents: &Vec<String>, wrap_ids: Vec<usize>, tokenized_words: Vec<Token2>) -> Self {
-        let lines: &Vec<String> = contents;
+    pub fn new(wrapped_text: &Vec<String>, wrap_ids: Vec<usize>, tokenized_words: Vec<Token2>) -> Self {
+        let lines: &Vec<String> = wrapped_text;
         let max_y = lines.len().saturating_sub(1);
         let min_x = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
         let line_lengths = lines.iter().map(|l| l.chars().count() + min_x).collect();
@@ -45,6 +46,7 @@ impl CursorPos {
             tokenized_words,
             last_token,
             last_fast_right: false,
+            wrapped_text: wrapped_text.clone(),
         }
     }
 
