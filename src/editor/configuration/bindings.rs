@@ -67,6 +67,7 @@ pub struct KeysConfiguration {
     pub move_start_line: KeyBind,
     pub move_end_line: KeyBind,
     pub delete_line: KeyBind,
+    pub save_file: KeyBind,
 }
 
 impl KeysConfiguration {
@@ -86,6 +87,7 @@ impl KeysConfiguration {
             move_start_line: KeyBind::from_raw(&raw.move_start_line).unwrap_or_else(|_| KeysConfiguration::default().move_start_line),
             move_end_line: KeyBind::from_raw(&raw.move_end_line).unwrap_or_else(|_| KeysConfiguration::default().move_end_line),
             delete_line: KeyBind::from_raw(&raw.delete_line).unwrap_or_else(|_| KeysConfiguration::default().delete_line),
+            save_file: KeyBind::from_raw(&raw.save_file).unwrap_or_else(|_| KeysConfiguration::default().save_file),
         }
     }
     pub fn from_toml(toml_file: &Value) -> io::Result<Self> {
@@ -108,6 +110,8 @@ impl KeysConfiguration {
             move_start_line: KeyBind::new(KeyCode::Char('h'), KeyModifiers::CONTROL),
             move_end_line: KeyBind::new(KeyCode::Char('l'), KeyModifiers::CONTROL),
             delete_line: KeyBind::new(KeyCode::Char('d'), KeyModifiers::CONTROL),
+            save_file: KeyBind::new(KeyCode::Char('s'), KeyModifiers::CONTROL),
+
         }
     }
 }
@@ -128,6 +132,7 @@ pub struct RawKeysConfiguration {
     pub move_start_line: String,
     pub move_end_line: String,
     pub delete_line: String,
+    pub save_file: String,
 }
 
 impl RawKeysConfiguration {

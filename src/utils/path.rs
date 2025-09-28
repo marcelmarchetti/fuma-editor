@@ -80,6 +80,7 @@ fn normalize_path(path: &Path) -> PathBuf {
 }
 
 pub fn validate_filename_arg(arg: &str) -> Result<(), String> {
+    /*
     if arg.is_empty() {
         return Err("Filename cannot be empty".into());
     }
@@ -112,6 +113,8 @@ pub fn validate_filename_arg(arg: &str) -> Result<(), String> {
             return Err("Null byte not allowed in filename".into());
         }
     }
+    
+     */
 
     Ok(())
 }

@@ -1,3 +1,6 @@
+use std::{fs, io};
+use std::io::Write;
+use std::path::Path;
 use crate::values::globals::TERMINAL_RIGHT_MARGIN;
 use crate::cursor::cursor::CursorPos;
 use crate::log_debug;
@@ -121,5 +124,13 @@ impl TextBuffer {
         if self.line_count() == 1 || self.line_count() - 1 == line ||  self.line_count() == line {
             self.lines.push(String::new());
         }
+    }
+
+    pub fn save_to_file(&self, path: &Path) -> io::Result<()> {
+        let content = self.to_string();
+        let mut file = fs::File::create(path)?;
+        file.write_all(content.as_bytes())?;
+
+        Ok(())
     }
 }

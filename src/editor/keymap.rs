@@ -4,6 +4,7 @@ use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crate::editor::configuration::bindings::KeysConfiguration;
 use crate::editor::fuma_state::FumaState;
 use crate::utils::direction::Direction;
+use crate::values::globals::PATH;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Action {
@@ -21,6 +22,7 @@ pub enum Action {
     MoveStartLine,
     MoveEndLine,
     DeleteLine,
+    SaveFile
 }
 
 pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifiers), Action> {
@@ -39,6 +41,7 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.move_start_line.main_key, config.move_start_line.modifier_key), Action::MoveStartLine);
     map.insert((config.move_end_line.main_key, config.move_end_line.modifier_key), Action::MoveEndLine);
     map.insert((config.delete_line.main_key, config.delete_line.modifier_key), Action::DeleteLine);
+    map.insert((config.save_file.main_key, config.save_file.modifier_key), Action::SaveFile);
     map
 }
 
@@ -62,6 +65,7 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                     Action::MoveStartLine => if state.cursor.move_start_line() {state.redraw()? },
                     Action::MoveEndLine =>  if state.cursor.move_end_line() {state.redraw()? },
                     Action::DeleteLine => state.delete_line()?,
+                    Action::SaveFile => { state.buffer.save_to_file(&PATH.lock().unwrap().clone().unwrap())?; }
                 }
             } else if let KeyCode::Char(c) = code {
                 if modifiers.is_empty() || modifiers==KeyModifiers::NONE {
