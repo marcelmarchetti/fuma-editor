@@ -176,8 +176,6 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
     let mut mock_token: Token2P = Token2P::new();
     let mut gen_token: bool = true;
 
-    let terminal_left_margin = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
-
     for (inx_row, line) in wrap_text.iter().enumerate() {
         for (inx_col, c) in line.chars().enumerate() {
             if gen_token {
