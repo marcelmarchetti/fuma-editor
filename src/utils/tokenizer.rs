@@ -211,23 +211,13 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
         }
         if wrap_ids[inx_row] != wrap_ids[inx_row.saturating_add(1).min(wrap_ids.len().saturating_sub(1))] {
             if !value_buffer.is_empty() {
-
-                mock_token.value = Some(value_buffer.clone());
-                mock_token.col_end = Some(terminal_left_margin + line.chars().count().saturating_sub(1));
-                mock_token.row_end = Some(inx_row);
-                mock_token.token_type = Some(TokenType::Word);
-                tokens.push(Token2::new(&mock_token)?);
-                start_new_token(&mut mock_token, &mut token_count, &mut gen_token, &mut value_buffer);
+                add_token_and_reset_mock(&mut mock_token, line.chars().count().saturating_sub(1), inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
             }
         }
     }
 
     if !value_buffer.is_empty() {
-        mock_token.value = Some(value_buffer);
-        mock_token.col_end = Some(terminal_left_margin + wrap_text[wrap_text.len().saturating_sub(1)].chars().count().saturating_sub(1));
-        mock_token.row_end = Some(wrap_text.len().saturating_sub(1));
-        mock_token.token_type = Some(TokenType::Word);
-        tokens.push(Token2::new(&mock_token)?);
+        end_mock_token(&mut mock_token, wrap_text[wrap_text.len().saturating_sub(1)].chars().count().saturating_sub(1), wrap_text.len().saturating_sub(1), value_buffer, TokenType::Word, &mut tokens)?;
     }
 
     if debug {
