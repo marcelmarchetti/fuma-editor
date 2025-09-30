@@ -127,7 +127,7 @@ impl CursorPos {
 
         Err(io::Error::new(
             io::ErrorKind::NotFound,
-            format!("Token not found. Buffer ended at row {}, col {}", row, col),
+            format!("Token not found. Buffer ended at row {}, col {}, Cursor x: {} Cursor y: {}, Direction: {}", row, col, self.x,self.y,direction),
         ))
     }
 
@@ -140,7 +140,7 @@ impl CursorPos {
             match self.get_token2(direction) {
                 Ok(t) => t.clone(),
                 Err(e) => {
-                    log_info!("Token not found. Cursor x: {} Cursor y: {}, Direction: {}, {}",self.x,self.y,direction, e);
+                    log_info!("{}", e);
                     return Ok(());
                 }
             }
