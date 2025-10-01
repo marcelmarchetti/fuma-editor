@@ -5,3 +5,4 @@ mod keymap;
 pub mod text_buffer;
 mod configuration;
 mod text_manipulation;
+mod save;

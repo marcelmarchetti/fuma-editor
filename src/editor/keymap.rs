@@ -97,7 +97,7 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
 
 
                 match action {
-                    Action::Quit => return Ok(ReturnEvent::Quit),
+                    Action::Quit => return state.confirm_save(),
                     Action::MoveUp => if state.cursor.move_up()? { state.redraw()?; },
                     Action::MoveDown => if state.cursor.move_down()? { state.redraw()?; },
                     Action::MoveLeft => state.cursor.move_left(),

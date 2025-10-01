@@ -1,9 +1,9 @@
 ﻿use std::io;
-use std::io::{stdout};
+use std::io::{stdout, Cursor};
 use std::sync::atomic::Ordering;
-use crossterm::cursor::{MoveTo, Show};
+use crossterm::cursor::{Hide, MoveTo, Show};
 use crossterm::{execute};
-use crossterm::style::Print;
+use crossterm::style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor};
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
 use crate::editor::fuma_state::FumaState;
 use crate::log_debug;
@@ -22,7 +22,7 @@ pub fn clean_screen() -> io::Result<()>{
 pub fn draw_screen(state: &FumaState) -> io::Result<()> {
     let (_, terminal_rows) = size()?;
 
-    execute!(stdout(), crossterm::cursor::Hide)?;
+    execute!(stdout(), Hide)?;
 
     execute!(
         stdout(),
@@ -99,5 +99,17 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
         EndSynchronizedUpdate
     )?;
 
+    Ok(())
+}
+
+pub fn draw_confirm_message(state: &FumaState, message: &str) -> io::Result<()>{
+    let (cols, rows) = size()?;
+
+    for col in state.cursor.min_x as u16..=cols {
+        execute!(stdout(), MoveTo(col, rows - 1), Print(" "))?;
+    }
+
+    execute!(stdout(), MoveTo(state.cursor.min_x as u16, rows - 1), SetBackgroundColor(Color::DarkBlue),
+        SetForegroundColor(Color::Black), Hide, Print(message), ResetColor)?;
     Ok(())
 }
