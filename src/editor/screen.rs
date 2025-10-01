@@ -43,20 +43,18 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
         let global_line_idx = start + i;
         let mut line_to_print = line.clone();
 
-        // Aplicar selección si existe y está en esta línea
         if let Some(selection) = &state.selected_text {
             let (sel_start_row, sel_start_col, sel_end_row, sel_end_col) = (
                 selection.row_start , selection.col_start - index_spacing,
                 selection.row_end, selection.col_end - index_spacing
             );
 
-            // Verificar si esta línea global está dentro de la selección
             if global_line_idx >= sel_start_row && global_line_idx <= sel_end_row {
                 let line_start = if global_line_idx == sel_start_row { sel_start_col } else { 0 };
                 let line_end = if global_line_idx == sel_end_row { sel_end_col } else { line_to_print.len() };
 
                 if line_start < line_end && line_end <= line_to_print.len() {
-                    // Insertar códigos de inversión de color para la selección
+
                     let selected_part = &line_to_print[line_start..line_end];
                     let before_selection = &line_to_print[0..line_start];
                     let after_selection = &line_to_print[line_end..];

@@ -1,5 +1,7 @@
 use std::io;
 use std::sync::atomic::Ordering;
+use std::sync::Mutex;
+use arboard::Clipboard;
 use crate::values::globals::{DEBUG_TOKENIZER, DEBUG_WRAPPING, TERMINAL_LEFT_MARGIN};
 use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
@@ -14,6 +16,7 @@ pub(crate) struct FumaState {
     pub buffer: TextBuffer,
     pub tokenized_words: Vec<Token2>,
     pub selected_text: Option<TextSelected>,
+    pub clipboard: Mutex<Option<Clipboard>>,
 }
 
 impl FumaState {
@@ -31,6 +34,7 @@ impl FumaState {
             buffer,
             tokenized_words,
             selected_text: None,
+            clipboard: Mutex::new(None),
         })
     }
 

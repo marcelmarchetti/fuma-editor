@@ -5,7 +5,7 @@ use crate::utils::direction::Direction;
 
 #[derive(Clone)]
 pub struct TextSelected {
-    text: String,
+    pub(crate) text: String,
     pub(crate) row_start: usize,
     pub(crate) col_start: usize,
     pub(crate) row_end: usize,
@@ -51,7 +51,7 @@ impl TextSelected {
 
     fn first_is_after(&self) -> bool {
         self.first_row > self.row_end ||
-            (self.first_row == self.row_end && self.first_col > self.col_end)
+            (self.first_row == self.row_end && self.first_col >= self.col_end)
     }
 
     fn set_direction(&mut self) {

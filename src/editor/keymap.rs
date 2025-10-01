@@ -32,6 +32,9 @@ pub enum Action {
     MoveToEndSelected,
     //MoveTokenLeftSelected,
     //MoveTokenRightSelected
+    Copy,
+    Paste,
+    Cut,
 }
 
 pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifiers), Action> {
@@ -60,6 +63,9 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.move_to_end.main_key, KeyModifiers::SHIFT), Action::MoveToEndSelected);
     //map.insert((config.move_token_left.main_key, KeyModifiers::CONTROL | KeyModifiers::SHIFT), Action::MoveTokenLeftSelected);
     //map.insert((config.move_token_right.main_key, KeyModifiers::CONTROL | KeyModifiers::SHIFT), Action::MoveTokenRightSelected);
+    map.insert((config.copy.main_key, config.copy.modifier_key), Action::Copy);
+    map.insert((config.paste.main_key, config.paste.modifier_key), Action::Paste);
+    map.insert((config.cut.main_key, config.cut.modifier_key), Action::Cut);
 
 
     map
@@ -69,11 +75,17 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
     match event {
         Event::Resize(_, _) => state.resize_console()?,
         Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => {
-            if !modifiers.contains(KeyModifiers::SHIFT) {
-                state.delete_selection();
-                state.redraw()?;
-            }
             if let Some(action) = keymap.get(&(code, modifiers)) {
+
+                if !modifiers.contains(KeyModifiers::SHIFT)
+                    && !(action == &Action::Copy)
+                    && !(action == &Action::Paste)
+                    && !(action == &Action::Cut) {
+                    state.delete_selection();
+                    state.redraw()?;
+                }
+
+
                 match action {
                     Action::Quit => return Ok(false),
                     Action::MoveUp => if state.cursor.move_up()? { state.redraw()?; },
@@ -91,6 +103,12 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                     Action::DeleteLine => state.delete_line()?,
                     Action::SaveFile => { state.buffer.save_to_file()? },
 
+                    Action::Copy => { state.copy_selection_to_clipboard()? },
+                    Action::Paste => {state.paste_from_clipboard()? },
+                    Action::Cut => {
+                        state.cut_selection_to_clipboard()?;
+                        state.redraw()?;
+                    }
 
                     Action::MoveUpSelected => {
                         state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
@@ -128,21 +146,6 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                         state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
                         state.redraw()?;
                     },
-                    /*
-                    Action::MoveTokenLeftSelected => {
-                        state.update_or_create_selection(DEBUG_SELECTION)?;
-                        state.cursor.move_by_token2(Direction::Left)?;
-                        state.update_or_create_selection(DEBUG_SELECTION)?;
-                        state.redraw()?;
-                    },
-                    Action::MoveTokenRightSelected => {
-                        state.update_or_create_selection(DEBUG_SELECTION)?;
-                        state.cursor.move_by_token2(Direction::Right)?;
-                        state.update_or_create_selection(DEBUG_SELECTION)?;
-                        state.redraw()?;
-                    }
-
-                     */
                 }
             } else if let KeyCode::Char(c) = code {
                 if modifiers.is_empty() || modifiers==KeyModifiers::NONE {

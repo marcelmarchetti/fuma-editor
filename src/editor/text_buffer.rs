@@ -143,4 +143,90 @@ impl TextBuffer {
 
         Ok(())
     }
+
+    pub fn delete_selected_text(
+        &mut self,
+        start_row: usize,
+        start_col: usize,
+        end_row: usize,
+        end_col: usize,
+    ) -> io::Result<()> {
+        let (start_row, start_col, end_row, end_col) =
+            Self::order_coords(start_row, start_col, end_row, end_col);
+
+        if start_row == end_row {
+            self.delete_single_line_selection(start_row, start_col, end_col);
+        } else {
+            self.delete_multi_line_selection(start_row, start_col, end_row, end_col);
+        }
+
+        if self.lines.is_empty() {
+            self.lines.push(String::new());
+        }
+
+        Ok(())
+    }
+
+    fn delete_single_line_selection(&mut self, row: usize, start_col: usize, end_col: usize) {
+        if let Some(line) = self.lines.get_mut(row) {
+            let len = line.chars().count();
+            let start_col = start_col.min(len);
+            let end_col = end_col.min(len);
+
+            if start_col < end_col {
+                let start_byte = line.char_indices().nth(start_col).map(|(i, _)| i).unwrap_or(line.len());
+                let end_byte = line.char_indices().nth(end_col).map(|(i, _)| i).unwrap_or(line.len());
+                line.drain(start_byte..end_byte);
+            }
+        }
+    }
+    fn delete_multi_line_selection(
+        &mut self,
+        start_row: usize,
+        start_col: usize,
+        end_row: usize,
+        end_col: usize,
+    ) {
+        if let Some(first_line) = self.lines.get_mut(start_row) {
+            let len = first_line.chars().count();
+            let start_col = start_col.min(len);
+            let start_byte = first_line.char_indices().nth(start_col).map(|(i, _)| i).unwrap_or(first_line.len());
+            first_line.drain(start_byte..);
+        }
+
+        if let Some(last_line) = self.lines.get_mut(end_row) {
+            let len = last_line.chars().count();
+            let end_col = end_col.min(len);
+            let end_byte = last_line.char_indices().nth(end_col).map(|(i, _)| i).unwrap_or(last_line.len());
+            last_line.drain(..end_byte);
+        }
+
+        if start_row < end_row && end_row < self.lines.len() {
+            let last_line_content = self.lines[end_row].clone();
+            if let Some(first_line) = self.lines.get_mut(start_row) {
+                first_line.push_str(&last_line_content);
+            }
+
+            for _ in start_row + 1..=end_row {
+                if start_row + 1 < self.lines.len() {
+                    self.lines.remove(start_row + 1);
+                }
+            }
+        }
+    }
+
+    pub fn order_coords(
+        start_row: usize,
+        start_col: usize,
+        end_row: usize,
+        end_col: usize,
+    ) -> (usize, usize, usize, usize) {
+        let (mut sr, mut sc, mut er, mut ec) = (start_row, start_col, end_row, end_col);
+        if sr > er || (sr == er && sc > ec) {
+            std::mem::swap(&mut sr, &mut er);
+            std::mem::swap(&mut sc, &mut ec);
+        }
+        (sr, sc, er, ec)
+    }
 }
+

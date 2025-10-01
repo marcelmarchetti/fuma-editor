@@ -74,6 +74,9 @@ pub struct KeysConfiguration {
     pub move_end_line: KeyBind,
     pub delete_line: KeyBind,
     pub save_file: KeyBind,
+    pub copy: KeyBind,
+    pub paste: KeyBind,
+    pub cut: KeyBind,
 }
 
 impl KeysConfiguration {
@@ -94,6 +97,9 @@ impl KeysConfiguration {
             move_end_line: KeyBind::from_raw(&raw.move_end_line).unwrap_or_else(|_| KeysConfiguration::default().move_end_line),
             delete_line: KeyBind::from_raw(&raw.delete_line).unwrap_or_else(|_| KeysConfiguration::default().delete_line),
             save_file: KeyBind::from_raw(&raw.save_file).unwrap_or_else(|_| KeysConfiguration::default().save_file),
+            copy: KeyBind::from_raw(&raw.copy).unwrap_or_else(|_| KeysConfiguration::default().copy),
+            paste: KeyBind::from_raw(&raw.paste).unwrap_or_else(|_| KeysConfiguration::default().paste),
+            cut: KeyBind::from_raw(&raw.cut).unwrap_or_else(|_| KeysConfiguration::default().cut),
         }
     }
     pub fn from_toml(toml_file: &Value) -> io::Result<Self> {
@@ -117,6 +123,9 @@ impl KeysConfiguration {
             move_end_line: KeyBind::new(KeyCode::Char('l'), KeyModifiers::CONTROL),
             delete_line: KeyBind::new(KeyCode::Char('d'), KeyModifiers::CONTROL),
             save_file: KeyBind::new(KeyCode::Char('s'), KeyModifiers::CONTROL),
+            copy: KeyBind::new(KeyCode::Char('c'), KeyModifiers::CONTROL),
+            paste: KeyBind::new(KeyCode::Char('v'), KeyModifiers::CONTROL),
+            cut: KeyBind::new(KeyCode::Char('x'), KeyModifiers::CONTROL),
 
         }
     }
@@ -139,6 +148,9 @@ pub struct RawKeysConfiguration {
     pub move_end_line: String,
     pub delete_line: String,
     pub save_file: String,
+    pub copy: String,
+    pub paste: String,
+    pub cut: String,
 }
 
 impl RawKeysConfiguration {

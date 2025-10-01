@@ -6,3 +6,4 @@ pub mod text_buffer;
 mod insert_text;
 mod configuration;
 mod select_text;
+mod clipboard;
