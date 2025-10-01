@@ -61,6 +61,7 @@ impl Token2 {
 
 
 impl CursorPos {
+    /*
     pub fn get_token_on_cursor(&self) -> Option<Token2> {
         let token = self.tokenized_words.iter()
             .find(|t| {
@@ -77,6 +78,8 @@ impl CursorPos {
         }
         None
     }
+    
+     */
 
     fn cursor_in_last_token(&self) -> bool {
         self.last_token.contains_with_margin(self.y, self.x, 1, 1)

@@ -18,8 +18,8 @@ pub enum Action {
     MoveToEnd,
     MoveTokenLeft,
     MoveTokenRight,
-    GetToken,
-    TokenizeText,
+    //GetToken,
+    //TokenizeText,
     MoveStartLine,
     MoveEndLine,
     DeleteLine,
@@ -48,8 +48,8 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.move_to_end.main_key, config.move_to_end.modifier_key), Action::MoveToEnd);
     map.insert((config.move_token_left.main_key, config.move_token_left.modifier_key), Action::MoveTokenLeft);
     map.insert((config.move_token_right.main_key, config.move_token_right.modifier_key), Action::MoveTokenRight);
-    map.insert((config.get_token.main_key, config.get_token.modifier_key), Action::GetToken);
-    map.insert((config.tokenize_text.main_key, config.tokenize_text.modifier_key), Action::TokenizeText);
+    //map.insert((config.get_token.main_key, config.get_token.modifier_key), Action::GetToken);
+    //map.insert((config.tokenize_text.main_key, config.tokenize_text.modifier_key), Action::TokenizeText);
     map.insert((config.move_start_line.main_key, config.move_start_line.modifier_key), Action::MoveStartLine);
     map.insert((config.move_end_line.main_key, config.move_end_line.modifier_key), Action::MoveEndLine);
     map.insert((config.delete_line.main_key, config.delete_line.modifier_key), Action::DeleteLine);
@@ -66,8 +66,7 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.copy.main_key, config.copy.modifier_key), Action::Copy);
     map.insert((config.paste.main_key, config.paste.modifier_key), Action::Paste);
     map.insert((config.cut.main_key, config.cut.modifier_key), Action::Cut);
-
-
+    
     map
 }
 
@@ -96,8 +95,8 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                     Action::MoveToEnd => state.cursor.move_end(),
                     Action::MoveTokenLeft => state.cursor.move_by_token2(Direction::Left)?,
                     Action::MoveTokenRight => state.cursor.move_by_token2(Direction::Right)?,
-                    Action::GetToken => { _ = state.cursor.get_token_on_cursor(); },
-                    Action::TokenizeText => state.tokenize_text()?,
+                    //Action::GetToken => { _ = state.cursor.get_token_on_cursor(); },
+                    //Action::TokenizeText => state.tokenize_text()?,
                     Action::MoveStartLine => if state.cursor.move_start_line()? {state.redraw()? },
                     Action::MoveEndLine =>  if state.cursor.move_end_line()? {state.redraw()? },
                     Action::DeleteLine => state.delete_line()?,

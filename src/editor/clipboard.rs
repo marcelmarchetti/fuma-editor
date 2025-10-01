@@ -140,15 +140,7 @@ impl FumaState {
         if let Some(selection) = &self.selected_text.clone() {
             self.copy_selection_to_clipboard()?;
 
-            let (start_row, start_col, end_row, end_col) =
-                TextBuffer::order_coords(selection.row_start, selection.col_start, selection.row_end, selection.col_end);
-
-            self.buffer.delete_selected_text(start_row, start_col, end_row, end_col)?;
-
-            self.cursor.y = start_row.min(self.buffer.lines.len() - 1);
-            self.cursor.x = start_col.min(self.buffer.lines[self.cursor.y].chars().count());
-            self.cursor.clamp_x_to_current_line();
-            self.cursor.ensure_visible()?;
+            self.delete_selected_text()?;
 
             self.selected_text = None;
         }
@@ -158,7 +150,7 @@ impl FumaState {
 
 
     pub fn paste_from_clipboard(&mut self) -> io::Result<()> {
-        let clipboard_text = match Self::wl_paste() {
+        let mut clipboard_text = match Self::wl_paste() {
             Ok(t) => t,
             Err(_) => {
                 let ar = self.with_clipboard(|cb| {
@@ -172,6 +164,8 @@ impl FumaState {
             self.delete_selected_text()?;
             self.delete_selection();
         }
+
+        clipboard_text = clipboard_text.trim_end().to_string();
 
         for c in clipboard_text.chars() {
             if c == '\n' {
@@ -187,15 +181,19 @@ impl FumaState {
 
     fn delete_selected_text(&mut self) -> io::Result<()> {
         if let Some(selection) = &self.selected_text {
+
+            let (start_row, start_col) = self.wrap_result.get_logical_position(selection.row_start, selection.col_start)?;
+            let (end_row, end_col) = self.wrap_result.get_logical_position(selection.row_end, selection.col_end)?;
+
             self.buffer.delete_selected_text(
-                selection.row_start,
-                selection.col_start,
-                selection.row_end,
-                selection.col_end
+                start_row,
+                start_col,
+                end_row,
+                end_col
             )?;
             self.cursor.x = selection.col_start;
             self.cursor.y = selection.row_start;
-            self.cursor.clamp_x_to_current_line();
+
             self.cursor.ensure_visible()?;
         }
         Ok(())
