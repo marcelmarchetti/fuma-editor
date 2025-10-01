@@ -52,10 +52,6 @@ impl CursorPos {
         self.wrap_ids.get(other_y) == self.wrap_ids.get(self.y)
     }
 
-    pub(crate) fn wrap_id_for_line(&self, line: usize) -> Option<usize> {
-        self.wrap_ids.get(line).copied()
-    }
-
     pub(crate) fn get_line_length(&self, line: usize) -> usize {
         self.line_lengths.get(line).copied().unwrap_or(0)
     }

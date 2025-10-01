@@ -4,7 +4,6 @@ use std::sync::atomic::Ordering;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crate::editor::configuration::bindings::KeysConfiguration;
 use crate::editor::fuma_state::FumaState;
-use crate::log_debug;
 use crate::utils::direction::Direction;
 use crate::values::globals::DEBUG_SELECTION;
 

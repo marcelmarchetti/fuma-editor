@@ -5,7 +5,6 @@ use std::thread;
 use std::time::Duration;
 use arboard::Clipboard;
 use crate::editor::fuma_state::FumaState;
-use crate::editor::text_buffer::TextBuffer;
 use crate::log_debug;
 
 impl FumaState {
@@ -137,7 +136,7 @@ impl FumaState {
     }
 
     pub fn cut_selection_to_clipboard(&mut self) -> io::Result<()> {
-        if let Some(selection) = &self.selected_text.clone() {
+        if self.selected_text.is_some() {
             self.copy_selection_to_clipboard()?;
 
             self.delete_selected_text()?;

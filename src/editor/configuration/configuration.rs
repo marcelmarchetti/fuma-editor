@@ -1,11 +1,9 @@
 use std::{fs, io};
-use std::sync::atomic::Ordering;
 use toml::Value;
 use crate::{log_debug, log_error, log_info};
 use crate::editor::configuration::bindings::{KeysConfiguration};
 use crate::editor::configuration::debug::DebugConfiguration;
 use crate::editor::configuration::editor::EditorConfiguration;
-use crate::values::globals::{SHOW_LINE_NUMBERING};
 
 pub struct Configuration {
     pub bindings: KeysConfiguration,
