@@ -3,13 +3,11 @@ use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
-pub const DEBUG_WRAPPING: bool = false;
-//pub const DEBUG_SCREEN_RENDER: bool = false;
-pub const DEBUG_TOKENIZER: bool = false;
+pub static DEBUG_WRAPPING: AtomicBool = AtomicBool::new(false);
+pub static DEBUG_TOKENIZER: AtomicBool = AtomicBool::new(false);
+pub static DEBUG_SELECTION: AtomicBool = AtomicBool::new(false);
 
 pub const TERMINAL_RIGHT_MARGIN: usize = 2;
-
-pub const DEBUG_SELECTION: bool = true;
 
 pub static TERMINAL_LEFT_MARGIN: AtomicUsize = AtomicUsize::new(0);
 

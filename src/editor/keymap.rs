@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::io;
+use std::sync::atomic::Ordering;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crate::editor::configuration::bindings::KeysConfiguration;
 use crate::editor::fuma_state::FumaState;
@@ -71,6 +72,7 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
 }
 
 pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>) -> io::Result<bool> {
+    let debug_selection = DEBUG_SELECTION.load(Ordering::Relaxed);
     match event {
         Event::Resize(_, _) => state.resize_console()?,
         Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => {
@@ -110,39 +112,39 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                     }
 
                     Action::MoveUpSelected => {
-                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Left, debug_selection)?;
                         if state.cursor.move_up()? { state.redraw()?; }
-                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Left, debug_selection)?;
                         state.redraw()?;
                     },
                     Action::MoveDownSelected => {
-                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Right, debug_selection)?;
                         if state.cursor.move_down()? { state.redraw()?; }
-                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Right, debug_selection)?;
                         state.redraw()?;
                     },
                     Action::MoveLeftSelected => {
-                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Left, debug_selection)?;
                         state.cursor.move_left();
-                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Left, debug_selection)?;
                         state.redraw()?
                     },
                     Action::MoveRightSelected => {
-                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Right, debug_selection)?;
                         state.cursor.move_right();
-                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Right, debug_selection)?;
                         state.redraw()?
                     },
                     Action::MoveToEndSelected => {
-                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Right, debug_selection)?;
                         state.cursor.move_end();
-                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Right, debug_selection)?;
                         state.redraw()?;
                     },
                     Action::MoveToStartSelected => {
-                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Left, debug_selection)?;
                         state.cursor.move_start();
-                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.update_or_create_selection(Direction::Left, debug_selection)?;
                         state.redraw()?;
                     },
                 }

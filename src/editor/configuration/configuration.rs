@@ -3,12 +3,14 @@ use std::sync::atomic::Ordering;
 use toml::Value;
 use crate::{log_debug, log_error, log_info};
 use crate::editor::configuration::bindings::{KeysConfiguration};
+use crate::editor::configuration::debug::DebugConfiguration;
 use crate::editor::configuration::editor::EditorConfiguration;
 use crate::values::globals::{SHOW_LINE_NUMBERING};
 
 pub struct Configuration {
     pub bindings: KeysConfiguration,
     pub editor: EditorConfiguration,
+    pub debug: DebugConfiguration,
 }
 
 impl Configuration {
@@ -17,6 +19,7 @@ impl Configuration {
             Self {
                 bindings: KeysConfiguration::from_toml(toml_file)?,
                 editor: EditorConfiguration::new(toml_file),
+                debug: DebugConfiguration::new(toml_file),
             }
         )
     }
@@ -24,10 +27,12 @@ impl Configuration {
         Self {
             bindings: KeysConfiguration::default(),
             editor: EditorConfiguration::default(),
+            debug: DebugConfiguration::default(),
         }
     }
-    pub fn apply_configuration(self) {
-        SHOW_LINE_NUMBERING.store(self.editor.line_numbering, Ordering::Relaxed);
+    pub fn apply_configuration(&self) {
+        self.editor.apply_config();
+        self.debug.apply_config();
 
     }
 }

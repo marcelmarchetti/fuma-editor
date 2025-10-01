@@ -1,6 +1,8 @@
+use std::sync::atomic::Ordering;
 use serde::Deserialize;
 use toml::Value;
 use crate::log_error;
+use crate::values::globals::SHOW_LINE_NUMBERING;
 
 #[derive(Debug, Deserialize)]
 pub struct EditorConfiguration {
@@ -24,5 +26,9 @@ impl EditorConfiguration {
             }),
             None => EditorConfiguration::default()
         }
+    }
+    
+    pub fn apply_config(&self) {
+        SHOW_LINE_NUMBERING.store(self.line_numbering, Ordering::Relaxed);
     }
 }

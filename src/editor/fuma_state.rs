@@ -21,11 +21,9 @@ pub(crate) struct FumaState {
 
 impl FumaState {
     pub(crate) fn new(contents: String) -> io::Result<Self> {
-        
-        
         let buffer = TextBuffer::from_string(contents);
-        let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING)?;
-        let tokenized_words = tokenizer2(&wrap_result, DEBUG_TOKENIZER)?;
+        let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING.load(Ordering::Relaxed))?;
+        let tokenized_words = tokenizer2(&wrap_result, DEBUG_TOKENIZER.load(Ordering::Relaxed))?;
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
 
         Ok(Self {
@@ -50,7 +48,7 @@ impl FumaState {
     }
 
     pub(crate) fn tokenize_text(&mut self) -> io::Result<()> {
-        self.tokenized_words = tokenizer2(&self.wrap_result, DEBUG_TOKENIZER)?;
+        self.tokenized_words = tokenizer2(&self.wrap_result, DEBUG_TOKENIZER.load(Ordering::Relaxed))?;
 
         Ok(())
     }
@@ -60,7 +58,7 @@ impl FumaState {
     }
 
     pub(crate) fn wrap_content(&mut self) -> io::Result<()> {
-        self.wrap_result = wrap_content(&self.buffer.to_string(),  DEBUG_WRAPPING)?;
+        self.wrap_result = wrap_content(&self.buffer.to_string(),  DEBUG_WRAPPING.load(Ordering::Relaxed))?;
         Ok(())
     }
     pub(crate) fn resize_console(&mut self) -> io::Result<()> {
