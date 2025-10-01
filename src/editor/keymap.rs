@@ -3,7 +3,9 @@ use std::io;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crate::editor::configuration::bindings::KeysConfiguration;
 use crate::editor::fuma_state::FumaState;
+use crate::log_debug;
 use crate::utils::direction::Direction;
+use crate::values::globals::DEBUG_SELECTION;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Action {
@@ -21,7 +23,15 @@ pub enum Action {
     MoveStartLine,
     MoveEndLine,
     DeleteLine,
-    SaveFile
+    SaveFile,
+    MoveUpSelected,
+    MoveDownSelected,
+    MoveLeftSelected,
+    MoveRightSelected,
+    MoveToStartSelected,
+    MoveToEndSelected,
+    //MoveTokenLeftSelected,
+    //MoveTokenRightSelected
 }
 
 pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifiers), Action> {
@@ -41,6 +51,17 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.move_end_line.main_key, config.move_end_line.modifier_key), Action::MoveEndLine);
     map.insert((config.delete_line.main_key, config.delete_line.modifier_key), Action::DeleteLine);
     map.insert((config.save_file.main_key, config.save_file.modifier_key), Action::SaveFile);
+
+    map.insert((config.move_up.main_key, KeyModifiers::SHIFT), Action::MoveUpSelected);
+    map.insert((config.move_down.main_key, KeyModifiers::SHIFT), Action::MoveDownSelected);
+    map.insert((config.move_left.main_key, KeyModifiers::SHIFT), Action::MoveLeftSelected);
+    map.insert((config.move_right.main_key, KeyModifiers::SHIFT), Action::MoveRightSelected);
+    map.insert((config.move_to_start.main_key, KeyModifiers::SHIFT), Action::MoveToStartSelected);
+    map.insert((config.move_to_end.main_key, KeyModifiers::SHIFT), Action::MoveToEndSelected);
+    //map.insert((config.move_token_left.main_key, KeyModifiers::CONTROL | KeyModifiers::SHIFT), Action::MoveTokenLeftSelected);
+    //map.insert((config.move_token_right.main_key, KeyModifiers::CONTROL | KeyModifiers::SHIFT), Action::MoveTokenRightSelected);
+
+
     map
 }
 
@@ -48,6 +69,10 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
     match event {
         Event::Resize(_, _) => state.resize_console()?,
         Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => {
+            if !modifiers.contains(KeyModifiers::SHIFT) {
+                state.delete_selection();
+                state.redraw()?;
+            }
             if let Some(action) = keymap.get(&(code, modifiers)) {
                 match action {
                     Action::Quit => return Ok(false),
@@ -64,7 +89,60 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                     Action::MoveStartLine => if state.cursor.move_start_line()? {state.redraw()? },
                     Action::MoveEndLine =>  if state.cursor.move_end_line()? {state.redraw()? },
                     Action::DeleteLine => state.delete_line()?,
-                    Action::SaveFile => { state.buffer.save_to_file()? }
+                    Action::SaveFile => { state.buffer.save_to_file()? },
+
+
+                    Action::MoveUpSelected => {
+                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        if state.cursor.move_up()? { state.redraw()?; }
+                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.redraw()?;
+                    },
+                    Action::MoveDownSelected => {
+                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        if state.cursor.move_down()? { state.redraw()?; }
+                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.redraw()?;
+                    },
+                    Action::MoveLeftSelected => {
+                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.cursor.move_left();
+                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.redraw()?
+                    },
+                    Action::MoveRightSelected => {
+                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.cursor.move_right();
+                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.redraw()?
+                    },
+                    Action::MoveToEndSelected => {
+                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.cursor.move_end();
+                        state.update_or_create_selection(Direction::Right, DEBUG_SELECTION)?;
+                        state.redraw()?;
+                    },
+                    Action::MoveToStartSelected => {
+                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.cursor.move_start();
+                        state.update_or_create_selection(Direction::Left, DEBUG_SELECTION)?;
+                        state.redraw()?;
+                    },
+                    /*
+                    Action::MoveTokenLeftSelected => {
+                        state.update_or_create_selection(DEBUG_SELECTION)?;
+                        state.cursor.move_by_token2(Direction::Left)?;
+                        state.update_or_create_selection(DEBUG_SELECTION)?;
+                        state.redraw()?;
+                    },
+                    Action::MoveTokenRightSelected => {
+                        state.update_or_create_selection(DEBUG_SELECTION)?;
+                        state.cursor.move_by_token2(Direction::Right)?;
+                        state.update_or_create_selection(DEBUG_SELECTION)?;
+                        state.redraw()?;
+                    }
+
+                     */
                 }
             } else if let KeyCode::Char(c) = code {
                 if modifiers.is_empty() || modifiers==KeyModifiers::NONE {
@@ -72,10 +150,10 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                 }
             }
             else {
-                match code {
-                    KeyCode::Enter => state.insert_newline()?,
-                    KeyCode::Backspace => state.backspace()?,
-                    KeyCode::Delete => state.delete()?,
+                match (code, modifiers) {
+                    (KeyCode::Enter, KeyModifiers::NONE) => state.insert_newline()?,
+                    (KeyCode::Backspace, KeyModifiers::NONE) => state.backspace()?,
+                    (KeyCode::Delete, KeyModifiers::NONE)=> state.delete()?,
                     _ => {}
                 }
             }
@@ -84,3 +162,4 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
     }
     Ok(true)
 }
+

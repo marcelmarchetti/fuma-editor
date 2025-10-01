@@ -3,6 +3,7 @@ use std::sync::atomic::Ordering;
 use crate::values::globals::{DEBUG_TOKENIZER, DEBUG_WRAPPING, TERMINAL_LEFT_MARGIN};
 use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
+use crate::editor::select_text::TextSelected;
 use crate::editor::text_buffer::TextBuffer;
 use crate::utils::content_wrapper::{wrap_content, WrapResult};
 use crate::utils::tokenizer::{tokenizer2, Token2};
@@ -11,7 +12,8 @@ pub(crate) struct FumaState {
     pub cursor: CursorPos,
     pub wrap_result: WrapResult,
     pub buffer: TextBuffer,
-    pub tokenized_words: Vec<Token2>
+    pub tokenized_words: Vec<Token2>,
+    pub selected_text: Option<TextSelected>,
 }
 
 impl FumaState {
@@ -28,6 +30,7 @@ impl FumaState {
             wrap_result,
             buffer,
             tokenized_words,
+            selected_text: None,
         })
     }
 
