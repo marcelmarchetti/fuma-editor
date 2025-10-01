@@ -67,7 +67,7 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.copy.main_key, config.copy.modifier_key), Action::Copy);
     map.insert((config.paste.main_key, config.paste.modifier_key), Action::Paste);
     map.insert((config.cut.main_key, config.cut.modifier_key), Action::Cut);
-    map.insert((KeyCode::Char('r'), KeyModifiers::CONTROL), Action::HotReloadConfig);
+    map.insert((config.hot_reload.main_key, config.hot_reload.modifier_key), Action::HotReloadConfig);
     
     map
 }

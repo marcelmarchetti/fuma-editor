@@ -1,6 +1,5 @@
 use std::io;
 use crossterm::event::{KeyCode, KeyModifiers};
-use crossterm::event::Event::Key;
 use serde::Deserialize;
 use toml::Value;
 use crate::log_error;
@@ -79,6 +78,7 @@ pub struct KeysConfiguration {
     pub paste: KeyBind,
     pub cut: KeyBind,
     pub select_key: KeyBind,
+    pub hot_reload: KeyBind,
 }
 
 impl KeysConfiguration {
@@ -103,6 +103,7 @@ impl KeysConfiguration {
             paste: KeyBind::from_raw(&raw.paste, false).unwrap_or_else(|_| KeysConfiguration::default().paste),
             cut: KeyBind::from_raw(&raw.cut, false).unwrap_or_else(|_| KeysConfiguration::default().cut),
             select_key: KeyBind::from_raw(&raw.select_key, true).unwrap_or_else(|_| KeysConfiguration::default().select_key),
+            hot_reload: KeyBind::from_raw(&raw.hot_reload, false).unwrap_or_else(|_| KeysConfiguration::default().select_key),
         }
     }
     pub fn from_toml(toml_file: &Value) -> io::Result<Self> {
@@ -130,6 +131,7 @@ impl KeysConfiguration {
             paste: KeyBind::new(KeyCode::Char('v'), KeyModifiers::CONTROL),
             cut: KeyBind::new(KeyCode::Char('x'), KeyModifiers::CONTROL),
             select_key: KeyBind::new(KeyCode::Null, KeyModifiers::SHIFT),
+            hot_reload: KeyBind::new(KeyCode::Char('r'), KeyModifiers::CONTROL),
 
         }
     }
@@ -156,6 +158,7 @@ pub struct RawKeysConfiguration {
     pub paste: String,
     pub cut: String,
     pub select_key: String,
+    pub hot_reload: String,
 }
 
 impl RawKeysConfiguration {
