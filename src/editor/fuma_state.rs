@@ -5,7 +5,7 @@ use arboard::Clipboard;
 use crate::values::globals::{DEBUG_TOKENIZER, DEBUG_WRAPPING, TERMINAL_LEFT_MARGIN};
 use crate::cursor::cursor::CursorPos;
 use crate::editor::screen::draw_screen;
-use crate::editor::select_text::TextSelected;
+use crate::editor::text_manipulation::select_text::TextSelected;
 use crate::editor::text_buffer::TextBuffer;
 use crate::utils::content_wrapper::{wrap_content, WrapResult};
 use crate::utils::tokenizer::{tokenizer2, Token2};
