@@ -35,6 +35,7 @@ pub enum Action {
     Copy,
     Paste,
     Cut,
+    HotReloadConfig,
 }
 
 pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifiers), Action> {
@@ -55,29 +56,38 @@ pub fn build_keymap(config: &KeysConfiguration) -> HashMap<(KeyCode, KeyModifier
     map.insert((config.delete_line.main_key, config.delete_line.modifier_key), Action::DeleteLine);
     map.insert((config.save_file.main_key, config.save_file.modifier_key), Action::SaveFile);
 
-    map.insert((config.move_up.main_key, KeyModifiers::SHIFT), Action::MoveUpSelected);
-    map.insert((config.move_down.main_key, KeyModifiers::SHIFT), Action::MoveDownSelected);
-    map.insert((config.move_left.main_key, KeyModifiers::SHIFT), Action::MoveLeftSelected);
-    map.insert((config.move_right.main_key, KeyModifiers::SHIFT), Action::MoveRightSelected);
-    map.insert((config.move_to_start.main_key, KeyModifiers::SHIFT), Action::MoveToStartSelected);
-    map.insert((config.move_to_end.main_key, KeyModifiers::SHIFT), Action::MoveToEndSelected);
+    map.insert((config.move_up.main_key, config.select_key.modifier_key), Action::MoveUpSelected);
+    map.insert((config.move_down.main_key, config.select_key.modifier_key), Action::MoveDownSelected);
+    map.insert((config.move_left.main_key, config.select_key.modifier_key), Action::MoveLeftSelected);
+    map.insert((config.move_right.main_key, config.select_key.modifier_key), Action::MoveRightSelected);
+    map.insert((config.move_to_start.main_key, config.select_key.modifier_key), Action::MoveToStartSelected);
+    map.insert((config.move_to_end.main_key, config.select_key.modifier_key), Action::MoveToEndSelected);
     //map.insert((config.move_token_left.main_key, KeyModifiers::CONTROL | KeyModifiers::SHIFT), Action::MoveTokenLeftSelected);
     //map.insert((config.move_token_right.main_key, KeyModifiers::CONTROL | KeyModifiers::SHIFT), Action::MoveTokenRightSelected);
     map.insert((config.copy.main_key, config.copy.modifier_key), Action::Copy);
     map.insert((config.paste.main_key, config.paste.modifier_key), Action::Paste);
     map.insert((config.cut.main_key, config.cut.modifier_key), Action::Cut);
+    map.insert((KeyCode::Char('r'), KeyModifiers::CONTROL), Action::HotReloadConfig);
     
     map
 }
 
-pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>) -> io::Result<bool> {
+#[derive(PartialEq)]
+pub enum ReturnEvent {
+    Quit,
+    ReloadConfig,
+    Continue,
+}
+
+pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>, configuration: &KeysConfiguration)
+    -> io::Result<ReturnEvent> {
     let debug_selection = DEBUG_SELECTION.load(Ordering::Relaxed);
     match event {
         Event::Resize(_, _) => state.resize_console()?,
         Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => {
             if let Some(action) = keymap.get(&(code, modifiers)) {
 
-                if !modifiers.contains(KeyModifiers::SHIFT)
+                if !modifiers.contains(configuration.select_key.modifier_key)
                     && !(action == &Action::Copy)
                     && !(action == &Action::Paste)
                     && !(action == &Action::Cut) {
@@ -87,7 +97,7 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
 
 
                 match action {
-                    Action::Quit => return Ok(false),
+                    Action::Quit => return Ok(ReturnEvent::Quit),
                     Action::MoveUp => if state.cursor.move_up()? { state.redraw()?; },
                     Action::MoveDown => if state.cursor.move_down()? { state.redraw()?; },
                     Action::MoveLeft => state.cursor.move_left(),
@@ -146,6 +156,9 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
                         state.update_or_create_selection(Direction::Left, debug_selection)?;
                         state.redraw()?;
                     },
+                    Action::HotReloadConfig => {
+                        return Ok(ReturnEvent::ReloadConfig);
+                    }
                 }
             } else if let KeyCode::Char(c) = code {
                 if modifiers.is_empty() || modifiers==KeyModifiers::NONE {
@@ -163,6 +176,6 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
         }
         _ => {}
     }
-    Ok(true)
+    Ok(ReturnEvent::Continue)
 }
 

@@ -20,8 +20,8 @@ pub(crate) struct FumaState {
 }
 
 impl FumaState {
-    pub(crate) fn new(contents: String) -> io::Result<Self> {
-        let buffer = TextBuffer::from_string(contents);
+    pub(crate) fn new(contents: &String) -> io::Result<Self> {
+        let buffer = TextBuffer::from_string(contents.clone());
         let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING.load(Ordering::Relaxed))?;
         let tokenized_words = tokenizer2(&wrap_result, DEBUG_TOKENIZER.load(Ordering::Relaxed))?;
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
