@@ -129,17 +129,14 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
 
 pub fn draw_confirm_message(state: &FumaState, message: &str) -> io::Result<()>{
     let mut out = stdout();
-    let (cols, rows) = size()?;
-
-    for col in state.cursor.min_x as u16..=cols {
-        queue!(out, MoveTo(col, rows - 1), Print(" "))?;
-    }
+    let (_, rows) = size()?;
 
     queue!(
         out,
         MoveTo(state.cursor.min_x as u16, rows - 1),
-        SetBackgroundColor(OVERLAY0),
         SetForegroundColor(SUBTEXT1),
+        SetBackgroundColor(OVERLAY0),
+        Clear(ClearType::FromCursorDown),
         Hide,
         Print(message),
         ResetColor)?;
