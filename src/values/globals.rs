@@ -14,6 +14,7 @@ pub static TERMINAL_LEFT_MARGIN: AtomicUsize = AtomicUsize::new(0);
 pub static TERMINAL_NUMBERING_DELIMITATOR_SEPARATION: usize = 1;
 
 pub static SHOW_LINE_NUMBERING: AtomicBool = AtomicBool::new(true);
+pub static AUTOSAVE: AtomicBool = AtomicBool::new(false);
 
 pub const DELIMITATOR: char = '│';
 

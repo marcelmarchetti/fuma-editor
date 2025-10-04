@@ -5,7 +5,7 @@ use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crate::editor::configuration::bindings::KeysConfiguration;
 use crate::editor::fuma_state::FumaState;
 use crate::utils::direction::Direction;
-use crate::values::globals::DEBUG_SELECTION;
+use crate::values::globals::{AUTOSAVE, DEBUG_SELECTION};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Action {
@@ -177,6 +177,7 @@ pub fn handle_event(original_content: &String, event: Event, state: &mut FumaSta
         }
         _ => {}
     }
+    if AUTOSAVE.load(Ordering::Relaxed) { state.buffer.save_to_file()? }
     Ok(ReturnEvent::Continue)
 }
 

@@ -2,17 +2,19 @@ use std::sync::atomic::Ordering;
 use serde::Deserialize;
 use toml::Value;
 use crate::log_error;
-use crate::values::globals::SHOW_LINE_NUMBERING;
+use crate::values::globals::{AUTOSAVE, SHOW_LINE_NUMBERING};
 
 #[derive(Debug, Deserialize)]
 pub struct EditorConfiguration {
-    pub line_numbering: bool
+    pub line_numbering: bool,
+    pub autosave: bool,
 }
 
 impl EditorConfiguration {
     pub fn default() -> Self {
         Self {
-            line_numbering: false
+            line_numbering: false,
+            autosave: false,
         }
     }
 }
@@ -30,5 +32,6 @@ impl EditorConfiguration {
     
     pub fn apply_config(&self) {
         SHOW_LINE_NUMBERING.store(self.line_numbering, Ordering::Relaxed);
+        AUTOSAVE.store(self.autosave, Ordering::Relaxed);
     }
 }
