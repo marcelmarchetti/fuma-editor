@@ -23,10 +23,9 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
     let mut out = stdout();
     let (_, terminal_rows) = size()?;
 
-    queue!(out, Hide)?;
-
     queue!(
         out,
+        Hide,
         BeginSynchronizedUpdate,
         SetBackgroundColor(BASE),
         Clear(ClearType::All),
@@ -44,10 +43,7 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
     let mut first_line = true;
     let mut last_wrapped_inx = 0;
 
-    let mut printed_rows = 0;
-
     for (i, line) in lines[start..end].iter().enumerate() {
-        printed_rows += 1;
         let global_line_idx = start + i;
         let line_to_print = line;
 
@@ -117,15 +113,7 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
             SetForegroundColor(text_color),
             MoveTo(index_spacing as u16, i as u16),
             Print(&line_to_print),
-            Clear(ClearType::UntilNewLine))?;
-    }
-
-    while printed_rows < terminal_rows {
-        queue!(
-            out,
-            MoveTo(0, printed_rows),
-            Clear(ClearType::UntilNewLine))?;
-        printed_rows += 1;
+            Clear(ClearType::FromCursorDown))?;
     }
 
     queue!(
