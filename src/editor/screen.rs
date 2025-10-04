@@ -3,10 +3,9 @@ use std::io::{stdout, Write};
 use std::sync::atomic::Ordering;
 use crossterm::cursor::{Hide, MoveTo, Show};
 use crossterm::{execute, queue};
-use crossterm::style::{ Print, ResetColor, SetBackgroundColor, SetForegroundColor};
+use crossterm::style::{Attribute, Print, ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor};
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
 use crate::editor::fuma_state::FumaState;
-use crate::log_debug;
 use crate::values::colors::{BASE, OVERLAY0, PEACH, SUBTEXT1, TEXT};
 use crate::values::globals::{DELIMITATOR, SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN};
 
@@ -22,27 +21,25 @@ pub fn clean_screen() -> io::Result<()>{
 }
 pub fn draw_screen(state: &FumaState) -> io::Result<()> {
     let mut out = stdout();
-    let (terminal_cols, terminal_rows) = size()?;
+    let (_, terminal_rows) = size()?;
 
-    execute!(stdout(), Hide)?;
+    queue!(out, Hide)?;
 
-    execute!(
-        stdout(),
+    queue!(
+        out,
         BeginSynchronizedUpdate,
-        Clear(ClearType::All),
         SetBackgroundColor(BASE),
+        Clear(ClearType::All),
     )?;
     let lane_numbering_color = PEACH;
     let text_color = TEXT;
 
 
-    let lines: Vec<String> = state.wrap_result.wrapped_text.clone();
+    let lines = &state.wrap_result.wrapped_text;
     let start = state.cursor.vertical_offset;
     let end = (start + terminal_rows as usize).min(lines.len());
 
     let index_spacing = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
-
-    let effective_cols = terminal_cols as usize - index_spacing;
 
     let mut first_line = true;
     let mut last_wrapped_inx = 0;
@@ -52,31 +49,7 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
     for (i, line) in lines[start..end].iter().enumerate() {
         printed_rows += 1;
         let global_line_idx = start + i;
-        let mut line_to_print = line.clone();
-
-        if let Some(selection) = &state.selected_text {
-            let (sel_start_row, sel_start_col, sel_end_row, sel_end_col) = (
-                selection.row_start , selection.col_start - index_spacing,
-                selection.row_end, selection.col_end - index_spacing
-            );
-
-            if global_line_idx >= sel_start_row && global_line_idx <= sel_end_row {
-                let line_start = if global_line_idx == sel_start_row { sel_start_col } else { 0 };
-                let line_end = if global_line_idx == sel_end_row { sel_end_col } else { line_to_print.len() };
-
-                if line_start < line_end && line_end <= line_to_print.len() {
-
-                    let selected_part = &line_to_print[line_start..line_end];
-                    let before_selection = &line_to_print[0..line_start];
-                    let after_selection = &line_to_print[line_end..];
-                    log_debug!("{}", selected_part);
-                    line_to_print = format!(
-                        "{}\x1b[7m{}\x1b[0m{}",
-                        before_selection, selected_part, after_selection
-                    );
-                }
-            }
-        }
+        let line_to_print = line;
 
         if SHOW_LINE_NUMBERING.load(Ordering::Relaxed) {
             if last_wrapped_inx != state.wrap_result.wrap_ids[global_line_idx] || first_line {
@@ -108,15 +81,43 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
             }
         }
 
-        while line_to_print.len() < effective_cols {
-            line_to_print.push(' ');
+        if let Some(selection) = &state.selected_text {
+            let (sel_start_row, sel_start_col, sel_end_row, sel_end_col) = (
+                selection.row_start , selection.col_start.saturating_sub(index_spacing),
+                selection.row_end, selection.col_end.saturating_sub(index_spacing)
+            );
+
+            if global_line_idx >= sel_start_row && global_line_idx <= sel_end_row {
+                let line_start = if global_line_idx == sel_start_row { sel_start_col } else { 0 };
+                let line_end = if global_line_idx == sel_end_row { sel_end_col } else { line_to_print.len() };
+
+                if line_start < line_end && line_end <= line_to_print.len() {
+
+                    let selected_part = &line_to_print[line_start..line_end];
+                    let before_selection = &line_to_print[0..line_start];
+                    let after_selection = &line_to_print[line_end..];
+
+                    queue!(
+                        out,
+                        SetForegroundColor(text_color),
+                        MoveTo(index_spacing as u16, i as u16),
+                        Print(before_selection),
+                        SetAttribute(Attribute::Reverse),
+                        Print(selected_part),
+                        SetAttribute(Attribute::Reset),
+                        Print(after_selection),
+                    )?;
+                    continue;
+                }
+            }
         }
 
         queue!(
             out,
             SetForegroundColor(text_color),
             MoveTo(index_spacing as u16, i as u16),
-            Print(&line_to_print))?;
+            Print(&line_to_print),
+            Clear(ClearType::UntilNewLine))?;
     }
 
     while printed_rows < terminal_rows {

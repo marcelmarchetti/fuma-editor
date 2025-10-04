@@ -61,12 +61,11 @@ impl TextBuffer {
 
         let (cols, _) = crossterm::terminal::size()?;
         if line < self.line_count() {
-            let current = self.lines[line].clone();
-            let (before, after) = current.split_at(col);
-            self.lines[line] = before.to_string();
-            self.lines.insert(line + 1, after.to_string());
 
-            if (cursor.x == 0 || cursor.x as u16 == cols - TERMINAL_RIGHT_MARGIN as u16) && !before.is_empty() && !after.is_empty() {
+            let  after: String = self.lines[line].split_off(col);
+            self.lines.insert(line + 1, after);
+
+            if (cursor.x == 0 || cursor.x as u16 == cols - TERMINAL_RIGHT_MARGIN as u16) && !self.lines[line].is_empty() && !self.lines[line + 1].is_empty() {
                 self.lines.insert(line + 1, "".to_string());
             }
 

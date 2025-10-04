@@ -197,9 +197,9 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
                     if !value_buffer.is_empty() {
                         add_token_and_reset_mock(&mut mock_token, inx_col.saturating_sub(1), inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
                     }
-                    let mut symbol = c.to_string();
+                    value_buffer = c.to_string();
                     start_mock_token(&mut mock_token, token_count, inx_col, inx_row);
-                    add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut symbol, TokenType::Symbol, &mut tokens, &mut token_count, &mut gen_token)?;
+                    add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut value_buffer, TokenType::Symbol, &mut tokens, &mut token_count, &mut gen_token)?;
                 }
                 _ => {
                     log_error!("Invalid character: {}", c);
