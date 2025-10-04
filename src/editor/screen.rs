@@ -7,6 +7,7 @@ use crossterm::style::{Color, Print, ResetColor, SetBackgroundColor, SetForegrou
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
 use crate::editor::fuma_state::FumaState;
 use crate::log_debug;
+use crate::values::colors::{LAVENDER, OVERLAY0, PEACH, ROSEWATER, SUBTEXT1, TEXT};
 use crate::values::globals::{DELIMITATOR, SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN};
 
 pub fn clean_screen() -> io::Result<()>{
@@ -29,6 +30,9 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
         BeginSynchronizedUpdate,
         Clear(ClearType::All),
     )?;
+    let lane_numbering_color = PEACH;
+    let text_color = TEXT;
+
 
     let lines: Vec<String> = state.wrap_result.wrapped_text.clone();
     let start = state.cursor.vertical_offset;
@@ -78,14 +82,24 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
 
                 margin_print.push(DELIMITATOR);
                 first_line = false;
-                execute!(stdout(), MoveTo(0, i as u16), Print(&margin_print))?;
+                execute!(
+                    stdout(),
+                    SetForegroundColor(lane_numbering_color),
+                    MoveTo(0, i as u16),
+                    Print(&margin_print),
+                    ResetColor)?;
             } else {
                 let mut margin = String::new();
                 while margin.len() < index_spacing - 1  {
                     margin.push(' ');
                 }
                 margin.push(DELIMITATOR);
-                execute!(stdout(), MoveTo(0, i as u16), Print(&margin))?;
+                execute!(
+                    stdout(),
+                    SetForegroundColor(lane_numbering_color),
+                    MoveTo(0, i as u16),
+                    Print(&margin),
+                    ResetColor)?;
             }
         }
 
@@ -94,9 +108,11 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
 
     execute!(
         stdout(),
+         SetForegroundColor(text_color),
         MoveTo(state.cursor.x as u16, (state.cursor.y - state.cursor.vertical_offset) as u16),
         Show,
-        EndSynchronizedUpdate
+        EndSynchronizedUpdate,
+        ResetColor
     )?;
 
     Ok(())
@@ -109,7 +125,13 @@ pub fn draw_confirm_message(state: &FumaState, message: &str) -> io::Result<()>{
         execute!(stdout(), MoveTo(col, rows - 1), Print(" "))?;
     }
 
-    execute!(stdout(), MoveTo(state.cursor.min_x as u16, rows - 1), SetBackgroundColor(Color::DarkBlue),
-        SetForegroundColor(Color::Black), Hide, Print(message), ResetColor)?;
+    execute!(
+        stdout(),
+        MoveTo(state.cursor.min_x as u16, rows - 1),
+        SetBackgroundColor(OVERLAY0),
+        SetForegroundColor(SUBTEXT1),
+        Hide,
+        Print(message),
+        ResetColor)?;
     Ok(())
 }
