@@ -1,13 +1,13 @@
 ﻿use std::io;
-use std::io::{stdout, Cursor};
+use std::io::{stdout, Write};
 use std::sync::atomic::Ordering;
 use crossterm::cursor::{Hide, MoveTo, Show};
-use crossterm::{execute};
-use crossterm::style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor};
+use crossterm::{execute, queue};
+use crossterm::style::{ Print, ResetColor, SetBackgroundColor, SetForegroundColor};
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
 use crate::editor::fuma_state::FumaState;
 use crate::log_debug;
-use crate::values::colors::{LAVENDER, OVERLAY0, PEACH, ROSEWATER, SUBTEXT1, TEXT};
+use crate::values::colors::{BASE, OVERLAY0, PEACH, SUBTEXT1, TEXT};
 use crate::values::globals::{DELIMITATOR, SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN};
 
 pub fn clean_screen() -> io::Result<()>{
@@ -21,7 +21,8 @@ pub fn clean_screen() -> io::Result<()>{
     Ok(())
 }
 pub fn draw_screen(state: &FumaState) -> io::Result<()> {
-    let (_, terminal_rows) = size()?;
+    let mut out = stdout();
+    let (terminal_cols, terminal_rows) = size()?;
 
     execute!(stdout(), Hide)?;
 
@@ -29,6 +30,7 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
         stdout(),
         BeginSynchronizedUpdate,
         Clear(ClearType::All),
+        SetBackgroundColor(BASE),
     )?;
     let lane_numbering_color = PEACH;
     let text_color = TEXT;
@@ -40,10 +42,15 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
 
     let index_spacing = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
 
+    let effective_cols = terminal_cols as usize - index_spacing;
+
     let mut first_line = true;
     let mut last_wrapped_inx = 0;
 
+    let mut printed_rows = 0;
+
     for (i, line) in lines[start..end].iter().enumerate() {
+        printed_rows += 1;
         let global_line_idx = start + i;
         let mut line_to_print = line.clone();
 
@@ -82,56 +89,71 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
 
                 margin_print.push(DELIMITATOR);
                 first_line = false;
-                execute!(
-                    stdout(),
+                queue!(
+                    out,
                     SetForegroundColor(lane_numbering_color),
                     MoveTo(0, i as u16),
-                    Print(&margin_print),
-                    ResetColor)?;
+                    Print(&margin_print))?;
             } else {
                 let mut margin = String::new();
                 while margin.len() < index_spacing - 1  {
                     margin.push(' ');
                 }
                 margin.push(DELIMITATOR);
-                execute!(
-                    stdout(),
+                queue!(
+                    out,
                     SetForegroundColor(lane_numbering_color),
                     MoveTo(0, i as u16),
-                    Print(&margin),
-                    ResetColor)?;
+                    Print(&margin))?;
             }
         }
 
-        execute!(stdout(), MoveTo(index_spacing as u16, i as u16), Print(&line_to_print))?;
+        while line_to_print.len() < effective_cols {
+            line_to_print.push(' ');
+        }
+
+        queue!(
+            out,
+            SetForegroundColor(text_color),
+            MoveTo(index_spacing as u16, i as u16),
+            Print(&line_to_print))?;
     }
 
-    execute!(
-        stdout(),
-         SetForegroundColor(text_color),
+    while printed_rows < terminal_rows {
+        queue!(
+            out,
+            MoveTo(0, printed_rows),
+            Clear(ClearType::UntilNewLine))?;
+        printed_rows += 1;
+    }
+
+    queue!(
+        out,
         MoveTo(state.cursor.x as u16, (state.cursor.y - state.cursor.vertical_offset) as u16),
         Show,
         EndSynchronizedUpdate,
-        ResetColor
     )?;
+    out.flush()?;
 
     Ok(())
 }
 
 pub fn draw_confirm_message(state: &FumaState, message: &str) -> io::Result<()>{
+    let mut out = stdout();
     let (cols, rows) = size()?;
 
     for col in state.cursor.min_x as u16..=cols {
-        execute!(stdout(), MoveTo(col, rows - 1), Print(" "))?;
+        queue!(out, MoveTo(col, rows - 1), Print(" "))?;
     }
 
-    execute!(
-        stdout(),
+    queue!(
+        out,
         MoveTo(state.cursor.min_x as u16, rows - 1),
         SetBackgroundColor(OVERLAY0),
         SetForegroundColor(SUBTEXT1),
         Hide,
         Print(message),
         ResetColor)?;
+    out.flush()?;
     Ok(())
 }
