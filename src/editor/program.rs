@@ -33,7 +33,7 @@ pub fn program_loop(contents: String) -> io::Result<()> {
     loop {
         if event::poll(Duration::from_millis(16))? {
             let evt = event::read()?;
-            let value = handle_event(evt, &mut state, &keymap, &configuration.bindings)?;
+            let value = handle_event(&contents ,evt, &mut state, &keymap, &configuration.bindings)?;
             if value == ReturnEvent::Quit {
                 break;
             }

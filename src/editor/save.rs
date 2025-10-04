@@ -6,7 +6,10 @@ use crate::editor::keymap::ReturnEvent;
 use crate::editor::screen::{draw_confirm_message};
 
 impl FumaState {
-    pub fn confirm_save(&self) -> io::Result<ReturnEvent> {
+    pub fn confirm_save(&self, original_content: &String) -> io::Result<ReturnEvent> {
+        if !self.buffer.check_if_changed(original_content) {
+            return Ok(ReturnEvent::Quit)
+        }
         draw_confirm_message(self, "Save changes? (y/n/esc)")?;
 
         loop {

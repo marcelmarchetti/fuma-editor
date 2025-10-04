@@ -228,5 +228,22 @@ impl TextBuffer {
         }
         (sr, sc, er, ec)
     }
+
+    pub fn check_if_changed(&self, content: &String) -> bool {
+        let original_content = TextBuffer::from_string(content.clone());
+
+        if self.lines.len() != original_content.lines.len() {
+            return true;
+        }
+
+        for (inx, line) in self.lines.iter().enumerate() {
+            if *line != original_content.lines[inx] {
+                return true
+            }
+        }
+
+        false
+    }
+
 }
 

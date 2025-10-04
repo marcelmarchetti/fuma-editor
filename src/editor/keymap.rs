@@ -79,7 +79,7 @@ pub enum ReturnEvent {
     Continue,
 }
 
-pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>, configuration: &KeysConfiguration)
+pub fn handle_event(original_content: &String, event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>, configuration: &KeysConfiguration)
     -> io::Result<ReturnEvent> {
     let debug_selection = DEBUG_SELECTION.load(Ordering::Relaxed);
     match event {
@@ -97,7 +97,7 @@ pub fn handle_event(event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCo
 
 
                 match action {
-                    Action::Quit => return state.confirm_save(),
+                    Action::Quit => return state.confirm_save(original_content),
                     Action::MoveUp => if state.cursor.move_up()? { state.redraw()?; },
                     Action::MoveDown => if state.cursor.move_down()? { state.redraw()?; },
                     Action::MoveLeft => state.cursor.move_left(),
