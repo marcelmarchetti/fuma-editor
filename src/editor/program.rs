@@ -6,7 +6,7 @@ use crate::editor::keymap::{build_keymap, handle_event, ReturnEvent};
 use crate::error_helpers::main_error_helper::{try_enable_raw_mode, try_enter_alternate_screen};
 use crate::guards::alt_screen_guard::AltScreenGuard;
 use crate::{log_error, log_info};
-
+use crate::editor::tree_parser::rust::basic_tokens::parse_tokens;
 
 pub fn program_loop(contents: String) -> io::Result<()> {
     log_info!("Preparing to run the program");
@@ -15,6 +15,8 @@ pub fn program_loop(contents: String) -> io::Result<()> {
     let keymap = build_keymap(&state.configuration.bindings);
     state.configuration.apply_configuration();
 
+    parse_tokens(&state.tokenized_words, true);
+    
     try_enter_alternate_screen()?;
     let _guard = AltScreenGuard;
     try_enable_raw_mode()?;

@@ -6,27 +6,30 @@ use crate::utils::debug::{print_tokens_debug};
 use crate::values::globals::TERMINAL_LEFT_MARGIN;
 
 #[derive(Clone, Debug)]
-pub enum TokenType{
+#[derive(PartialEq)]
+pub enum LexicTokenType {
     Word,
     Symbol,
+    EndOfLine,
     Empty
 }
 
-impl fmt::Display for TokenType {
+impl fmt::Display for LexicTokenType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            TokenType::Word => write!(f, "word"),
-            TokenType::Symbol => write!(f, "symbol"),
-            TokenType::Empty => write!(f, "empty"),
+            LexicTokenType::Word => write!(f, "word"),
+            LexicTokenType::Symbol => write!(f, "symbol"),
+            LexicTokenType::EndOfLine => write!(f, "EOL"),
+            LexicTokenType::Empty => write!(f, "empty"),
         }
     }
 }
 
 
 #[derive(Clone)]
-pub struct Token2 {
+pub struct LexicToken {
     pub id: usize,
-    pub token_type: TokenType,
+    pub token_type: LexicTokenType,
     pub value: String,
 
     pub col_start: usize,
@@ -35,7 +38,7 @@ pub struct Token2 {
     pub row_end: usize,
 }
 
-impl Token2 {
+impl LexicToken {
     pub fn new(provisional_token: &Token2P) -> io::Result<Self> {
         Ok(Self {
             id: provisional_token.id
@@ -83,7 +86,7 @@ impl Token2 {
         Self {
             id: 0,
             value: " ".to_string(),
-            token_type: TokenType::Empty,
+            token_type: LexicTokenType::Empty,
             col_start: 0,
             col_end: 0,
             row_start: 0,
@@ -94,7 +97,7 @@ impl Token2 {
 #[derive(Clone)]
 pub struct Token2P {
     pub id: Option<usize>,
-    pub token_type: Option<TokenType>,
+    pub token_type: Option<LexicTokenType>,
     pub value: Option<String>,
 
     pub col_start: Option<usize>,
@@ -146,7 +149,7 @@ fn start_mock_token(mock_token: &mut Token2P, token_count: usize, inx_col: usize
     mock_token.row_start = Some(inx_row);
 }
 
-fn end_mock_token(mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: String, token_type: TokenType, tokens: &mut Vec<Token2>) -> io::Result<()> {
+fn end_mock_token(mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: String, token_type: LexicTokenType, tokens: &mut Vec<LexicToken>) -> io::Result<()> {
     let terminal_left_margin = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
 
     mock_token.value = Some(value_buffer);
@@ -154,22 +157,22 @@ fn end_mock_token(mock_token: &mut Token2P, inx_col: usize, inx_row: usize, valu
     mock_token.row_end = Some(inx_row);
     mock_token.token_type = Some(token_type);
 
-    tokens.push(Token2::new(mock_token)?);
+    tokens.push(LexicToken::new(mock_token)?);
 
     Ok(())
 }
 
-fn add_token_and_reset_mock (mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: &mut String, token_type: TokenType, tokens: &mut Vec<Token2>, token_count: &mut usize, gen_token: &mut bool ) -> io::Result<()> {
+fn add_token_and_reset_mock (mock_token: &mut Token2P, inx_col: usize, inx_row: usize, value_buffer: &mut String, token_type: LexicTokenType, tokens: &mut Vec<LexicToken>, token_count: &mut usize, gen_token: &mut bool ) -> io::Result<()> {
     end_mock_token(mock_token, inx_col, inx_row, value_buffer.clone(), token_type, tokens)?;
     start_new_token(mock_token, token_count, gen_token, value_buffer);
     *gen_token = true;
     Ok(())
 }
-pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Token2>> {
+pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<LexicToken>> {
     let wrap_text = &wrap_result.wrapped_text;
     let wrap_ids = &wrap_result.wrap_ids;
 
-    let mut tokens: Vec<Token2> = Vec::new();
+    let mut tokens: Vec<LexicToken> = Vec::new();
     let mut value_buffer = String::new();
     let mut token_count: usize = 0;
 
@@ -185,7 +188,7 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
             match c {
                 c if c == ' ' => {
                     if !value_buffer.is_empty() {
-                        add_token_and_reset_mock(&mut mock_token, inx_col.saturating_sub(1), inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
+                        add_token_and_reset_mock(&mut mock_token, inx_col.saturating_sub(1), inx_row, &mut value_buffer, LexicTokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
                     }
                     gen_token = true;
                     continue;
@@ -195,11 +198,17 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
                 },
                 c if !c.is_alphanumeric() => {
                     if !value_buffer.is_empty() {
-                        add_token_and_reset_mock(&mut mock_token, inx_col.saturating_sub(1), inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
+                        add_token_and_reset_mock(&mut mock_token, inx_col.saturating_sub(1), inx_row, &mut value_buffer, LexicTokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
                     }
+                    let mut lexic_type = LexicTokenType::Symbol;
+                    
+                    if c == '\n' {
+                        lexic_type = LexicTokenType::EndOfLine;
+                    }
+
                     value_buffer = c.to_string();
                     start_mock_token(&mut mock_token, token_count, inx_col, inx_row);
-                    add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut value_buffer, TokenType::Symbol, &mut tokens, &mut token_count, &mut gen_token)?;
+                    add_token_and_reset_mock(&mut mock_token, inx_col, inx_row, &mut value_buffer, lexic_type, &mut tokens, &mut token_count, &mut gen_token)?;
                 }
                 _ => {
                     log_error!("Invalid character: {}", c);
@@ -209,13 +218,13 @@ pub fn tokenizer2 (wrap_result: &WrapResult, debug: bool) -> io::Result<Vec<Toke
         }
         if wrap_ids[inx_row] != wrap_ids[inx_row.saturating_add(1).min(wrap_ids.len().saturating_sub(1))] {
             if !value_buffer.is_empty() {
-                add_token_and_reset_mock(&mut mock_token, line.chars().count().saturating_sub(1), inx_row, &mut value_buffer, TokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
+                add_token_and_reset_mock(&mut mock_token, line.chars().count().saturating_sub(1), inx_row, &mut value_buffer, LexicTokenType::Word, &mut tokens, &mut token_count, &mut gen_token)?;
             }
         }
     }
 
     if !value_buffer.is_empty() {
-        end_mock_token(&mut mock_token, wrap_text[wrap_text.len().saturating_sub(1)].chars().count().saturating_sub(1), wrap_text.len().saturating_sub(1), value_buffer, TokenType::Word, &mut tokens)?;
+        end_mock_token(&mut mock_token, wrap_text[wrap_text.len().saturating_sub(1)].chars().count().saturating_sub(1), wrap_text.len().saturating_sub(1), value_buffer, LexicTokenType::Word, &mut tokens)?;
     }
 
     if debug {

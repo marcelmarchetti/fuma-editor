@@ -19,3 +19,5 @@ pub static AUTOSAVE: AtomicBool = AtomicBool::new(false);
 pub const DELIMITATOR: char = '│';
 
 pub static PATH: Lazy<Mutex<Option<PathBuf>>> = Lazy::new(|| Mutex::new(None));
+
+pub const MAX_SYMBOL_CHARS: usize = 3;

@@ -2,9 +2,9 @@ use std::io;
 use crate::cursor::cursor::CursorPos;
 use crate::{log_info};
 use crate::utils::direction::Direction;
-use crate::utils::tokenizer::Token2;
+use crate::utils::tokenizer::LexicToken;
 
-impl Token2 {
+impl LexicToken {
     pub fn contains(&self, row: usize, col: usize) -> bool {
         if self.row_start == self.row_end {
             return self.row_start == row && (self.col_start..=self.col_end).contains(&col);
@@ -91,7 +91,7 @@ impl CursorPos {
             Direction::Left => self.last_fast_right && self.cursor_in_last_token(),
         }
     }
-    pub fn get_token2(&mut self, direction: Direction) -> io::Result<&Token2> {
+    pub fn get_token2(&mut self, direction: Direction) -> io::Result<&LexicToken> {
         let mut col = self.x;
         let mut row = self.y;
         let wrap_id = self.wrap_ids[self.y];
@@ -137,7 +137,7 @@ impl CursorPos {
 
 
     pub fn move_by_token2(&mut self, direction: Direction) -> io::Result<()> {
-        let token: Token2 = if self.use_last_token(direction) {
+        let token: LexicToken = if self.use_last_token(direction) {
            self.last_token.clone()
         } else {
             match self.get_token2(direction) {

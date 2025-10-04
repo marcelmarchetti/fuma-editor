@@ -1,7 +1,7 @@
 use crate::{log_debug};
-use crate::utils::tokenizer::{Token2};
+use crate::utils::tokenizer::{LexicToken};
 
-pub fn print_token2(token: &Token2) {
+pub fn print_token2(token: &LexicToken) {
     log_debug!(
         "[ID: {} | Tipo: {:?} | Valor: '{}' | Col: {}-{} | Row: {}-{}]",
         token.id,
@@ -13,7 +13,7 @@ pub fn print_token2(token: &Token2) {
         token.row_end
     );
 }
-pub fn print_tokens_debug(tokens: &[Token2]) {
+pub fn print_tokens_debug(tokens: &[LexicToken]) {
     log_debug!("--- Debug Tokens ---");
     for token in tokens {
         print_token2(token);

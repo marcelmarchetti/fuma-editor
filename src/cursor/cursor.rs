@@ -3,7 +3,7 @@ use crossterm::cursor::{MoveTo, Show};
 use crossterm::{queue};
 use std::io::{stdout, Write};
 use std::sync::atomic::Ordering;
-use crate::utils::tokenizer::{Token2};
+use crate::utils::tokenizer::{LexicToken};
 use crate::values::globals::TERMINAL_LEFT_MARGIN;
 
 pub struct CursorPos {
@@ -15,20 +15,20 @@ pub struct CursorPos {
     pub(crate) line_lengths: Vec<usize>, 
     pub(crate) vertical_offset: usize,
     pub(crate) wrap_ids: Vec<usize>,
-    pub(crate) tokenized_words: Vec<Token2>,
-    pub(crate) last_token: Token2,
+    pub(crate) tokenized_words: Vec<LexicToken>,
+    pub(crate) last_token: LexicToken,
     pub(crate) last_fast_right: bool,
 }
 
 impl CursorPos {
-    pub fn new(wrapped_text: &Vec<String>, wrap_ids: Vec<usize>, tokenized_words: Vec<Token2>) -> Self {
+    pub fn new(wrapped_text: &Vec<String>, wrap_ids: Vec<usize>, tokenized_words: Vec<LexicToken>) -> Self {
         let lines: &Vec<String> = wrapped_text;
         let max_y = lines.len().saturating_sub(1);
         let min_x = TERMINAL_LEFT_MARGIN.load(Ordering::Relaxed);
         let line_lengths = lines.iter().map(|l| l.chars().count() + min_x).collect();
 
         let last_token = if tokenized_words.is_empty() {
-            Token2::empty()
+            LexicToken::empty()
         } else {
             tokenized_words[0].clone()
         };

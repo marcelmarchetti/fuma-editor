@@ -9,13 +9,13 @@ use crate::editor::screen::draw_screen;
 use crate::editor::text_manipulation::select_text::TextSelected;
 use crate::editor::text_buffer::TextBuffer;
 use crate::utils::content_wrapper::{wrap_content, WrapResult};
-use crate::utils::tokenizer::{tokenizer2, Token2};
+use crate::utils::tokenizer::{tokenizer2, LexicToken};
 
 pub(crate) struct FumaState {
     pub cursor: CursorPos,
     pub wrap_result: WrapResult,
     pub buffer: TextBuffer,
-    pub tokenized_words: Vec<Token2>,
+    pub tokenized_words: Vec<LexicToken>,
     pub selected_text: Option<TextSelected>,
     pub clipboard: Mutex<Option<Clipboard>>,
     pub configuration: Configuration
