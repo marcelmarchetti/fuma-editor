@@ -1,6 +1,6 @@
 ﻿use std::io;
 use crossterm::cursor::{MoveTo, Show};
-use crossterm::{execute, queue};
+use crossterm::{queue};
 use std::io::{stdout, Write};
 use std::sync::atomic::Ordering;
 use crate::utils::tokenizer::{Token2};

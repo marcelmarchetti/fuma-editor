@@ -1,4 +1,3 @@
-use std::cmp::PartialEq;
 use std::io;
 use std::time::Duration;
 use crossterm::{event};

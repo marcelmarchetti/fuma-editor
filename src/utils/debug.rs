@@ -1,8 +1,3 @@
-use std::io;
-use std::io::stdout;
-use crossterm::cursor::MoveTo;
-use crossterm::execute;
-use crossterm::style::Print;
 use crate::{log_debug};
 use crate::utils::tokenizer::{Token2};
 

@@ -2,7 +2,7 @@
 use std::io::{stdout, Write};
 use std::sync::atomic::Ordering;
 use crossterm::cursor::{Hide, MoveTo, Show};
-use crossterm::{execute, queue};
+use crossterm::{queue};
 use crossterm::style::{Attribute, Print, ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor};
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
 use crate::editor::fuma_state::FumaState;

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crossterm::style::Color;
 
 pub const LAVENDER: Color = Color::Rgb { r: 180, g: 190, b: 254 };
