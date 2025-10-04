@@ -12,12 +12,9 @@ use crate::editor::configuration::configuration::load_config;
 pub fn program_loop(contents: String) -> io::Result<()> {
     log_info!("Preparing to run the program");
 
-
-    let configuration = load_config()?;
-    let keymap = build_keymap(&configuration.bindings);
-    configuration.apply_configuration();
-
     let mut state = FumaState::new(&contents)?;
+    let keymap = build_keymap(&state.configuration.bindings);
+    state.configuration.apply_configuration();
 
     try_enter_alternate_screen()?;
     let _guard = AltScreenGuard;
@@ -32,7 +29,7 @@ pub fn program_loop(contents: String) -> io::Result<()> {
     loop {
         if event::poll(Duration::from_millis(16))? {
             let evt = event::read()?;
-            let value = handle_event(&contents ,evt, &mut state, &keymap, &configuration.bindings)?;
+            let value = handle_event(&contents ,evt, &mut state, &keymap)?;
             if value == ReturnEvent::Quit {
                 break;
             }

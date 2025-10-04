@@ -5,6 +5,7 @@ use crossterm::cursor::{Hide, MoveTo, Show};
 use crossterm::{queue};
 use crossterm::style::{Attribute, Print, ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor};
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
+use crate::editor::configuration::colors::ColorConfiguration;
 use crate::editor::fuma_state::FumaState;
 use crate::values::colors::{BASE, OVERLAY0, PEACH, SUBTEXT1, TEXT};
 use crate::values::globals::{DELIMITATOR, SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN};
@@ -25,15 +26,20 @@ pub fn draw_screen(state: &FumaState) -> io::Result<()> {
     let mut out = stdout();
     let (_, terminal_rows) = size()?;
 
+    let lane_numbering_color =  state.configuration.colors.line_numbering_color;
+    let text_color =  state.configuration.colors.text_color;
+    let background_color =  state.configuration.colors.background_color;
+
+
     queue!(
         out,
         Hide,
         BeginSynchronizedUpdate,
-        SetBackgroundColor(BASE),
+        SetBackgroundColor(background_color),
         Clear(ClearType::All),
     )?;
-    let lane_numbering_color = PEACH;
-    let text_color = TEXT;
+
+
 
 
     let lines = &state.wrap_result.wrapped_text;
@@ -133,11 +139,14 @@ pub fn draw_confirm_message(state: &FumaState, message: &str) -> io::Result<()>{
     let mut out = stdout();
     let (_, rows) = size()?;
 
+    let dialog_text_color = state.configuration.colors.dialog_text_color;
+    let dialog_color = state.configuration.colors.dialog_color;
+
     queue!(
         out,
         MoveTo(state.cursor.min_x as u16, rows - 1),
-        SetForegroundColor(SUBTEXT1),
-        SetBackgroundColor(OVERLAY0),
+        SetForegroundColor(dialog_text_color),
+        SetBackgroundColor(dialog_color),
         Clear(ClearType::FromCursorDown),
         Hide,
         Print(message),

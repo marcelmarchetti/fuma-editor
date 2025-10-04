@@ -4,6 +4,7 @@ use std::sync::Mutex;
 use arboard::Clipboard;
 use crate::values::globals::{DEBUG_TOKENIZER, DEBUG_WRAPPING, TERMINAL_LEFT_MARGIN};
 use crate::cursor::cursor::CursorPos;
+use crate::editor::configuration::configuration::{load_config, Configuration};
 use crate::editor::screen::draw_screen;
 use crate::editor::text_manipulation::select_text::TextSelected;
 use crate::editor::text_buffer::TextBuffer;
@@ -17,6 +18,7 @@ pub(crate) struct FumaState {
     pub tokenized_words: Vec<Token2>,
     pub selected_text: Option<TextSelected>,
     pub clipboard: Mutex<Option<Clipboard>>,
+    pub configuration: Configuration
 }
 
 impl FumaState {
@@ -25,6 +27,8 @@ impl FumaState {
         let wrap_result = wrap_content(&buffer.to_string(),  DEBUG_WRAPPING.load(Ordering::Relaxed))?;
         let tokenized_words = tokenizer2(&wrap_result, DEBUG_TOKENIZER.load(Ordering::Relaxed))?;
         let cursor = CursorPos::new(&wrap_result.wrapped_text, wrap_result.wrap_ids.clone(), tokenized_words.clone());
+        let configuration = load_config()?;
+        
 
         Ok(Self {
             cursor,
@@ -33,6 +37,7 @@ impl FumaState {
             tokenized_words,
             selected_text: None,
             clipboard: Mutex::new(None),
+            configuration
         })
     }
 

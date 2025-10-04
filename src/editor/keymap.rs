@@ -79,15 +79,16 @@ pub enum ReturnEvent {
     Continue,
 }
 
-pub fn handle_event(original_content: &String, event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>, configuration: &KeysConfiguration)
+pub fn handle_event(original_content: &String, event: Event, state: &mut FumaState, keymap: &HashMap<(KeyCode, KeyModifiers), Action>)
     -> io::Result<ReturnEvent> {
     let debug_selection = DEBUG_SELECTION.load(Ordering::Relaxed);
+
     match event {
         Event::Resize(_, _) => state.resize_console()?,
         Event::Key(KeyEvent { code, kind: KeyEventKind::Press, modifiers, .. }) => {
             if let Some(action) = keymap.get(&(code, modifiers)) {
 
-                if !modifiers.contains(configuration.select_key.modifier_key)
+                if !modifiers.contains(state.configuration.bindings.select_key.modifier_key)
                     && !(action == &Action::Copy)
                     && !(action == &Action::Paste)
                     && !(action == &Action::Cut) {

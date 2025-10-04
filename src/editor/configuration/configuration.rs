@@ -2,6 +2,7 @@ use std::{fs, io};
 use toml::Value;
 use crate::{log_debug, log_error, log_info};
 use crate::editor::configuration::bindings::{KeysConfiguration};
+use crate::editor::configuration::colors::ColorConfiguration;
 use crate::editor::configuration::debug::DebugConfiguration;
 use crate::editor::configuration::editor::EditorConfiguration;
 
@@ -9,6 +10,7 @@ pub struct Configuration {
     pub bindings: KeysConfiguration,
     pub editor: EditorConfiguration,
     pub debug: DebugConfiguration,
+    pub colors: ColorConfiguration,
 }
 
 impl Configuration {
@@ -18,6 +20,7 @@ impl Configuration {
                 bindings: KeysConfiguration::from_toml(toml_file)?,
                 editor: EditorConfiguration::new(toml_file),
                 debug: DebugConfiguration::new(toml_file),
+                colors: ColorConfiguration::from_toml(toml_file),
             }
         )
     }
@@ -26,6 +29,7 @@ impl Configuration {
             bindings: KeysConfiguration::default(),
             editor: EditorConfiguration::default(),
             debug: DebugConfiguration::default(),
+            colors: ColorConfiguration::default(),
         }
     }
     pub fn apply_configuration(&self) {
