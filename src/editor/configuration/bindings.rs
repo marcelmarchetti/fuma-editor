@@ -83,27 +83,29 @@ pub struct KeysConfiguration {
 
 impl KeysConfiguration {
     pub fn from_raw(raw: RawKeysConfiguration) -> Self {
+        let default = KeysConfiguration::default();
+
         Self {
-            quit: KeyBind::from_raw(&raw.quit, false).unwrap_or_else(|_| KeysConfiguration::default().quit),
-            move_up: KeyBind::from_raw(&raw.move_up, false).unwrap_or_else(|_| KeysConfiguration::default().move_up),
-            move_down: KeyBind::from_raw(&raw.move_down, false).unwrap_or_else(|_| KeysConfiguration::default().move_down),
-            move_left: KeyBind::from_raw(&raw.move_left, false).unwrap_or_else(|_| KeysConfiguration::default().move_left),
-            move_right: KeyBind::from_raw(&raw.move_right, false).unwrap_or_else(|_| KeysConfiguration::default().move_right),
-            move_to_start: KeyBind::from_raw(&raw.move_to_start, false).unwrap_or_else(|_| KeysConfiguration::default().move_to_start),
-            move_to_end: KeyBind::from_raw(&raw.move_to_end, false).unwrap_or_else(|_| KeysConfiguration::default().move_to_end),
-            move_token_left: KeyBind::from_raw(&raw.move_token_left, false).unwrap_or_else(|_| KeysConfiguration::default().move_token_left),
-            move_token_right: KeyBind::from_raw(&raw.move_token_right, false).unwrap_or_else(|_| KeysConfiguration::default().move_token_right),
-            //get_token: KeyBind::from_raw(&raw.get_token).unwrap_or_else(|_| KeysConfiguration::default().get_token),
-            //tokenize_text: KeyBind::from_raw(&raw.tokenize_text).unwrap_or_else(|_| KeysConfiguration::default().tokenize_text),
-            move_start_line: KeyBind::from_raw(&raw.move_start_line, false).unwrap_or_else(|_| KeysConfiguration::default().move_start_line),
-            move_end_line: KeyBind::from_raw(&raw.move_end_line, false).unwrap_or_else(|_| KeysConfiguration::default().move_end_line),
-            delete_line: KeyBind::from_raw(&raw.delete_line, false).unwrap_or_else(|_| KeysConfiguration::default().delete_line),
-            save_file: KeyBind::from_raw(&raw.save_file, false).unwrap_or_else(|_| KeysConfiguration::default().save_file),
-            copy: KeyBind::from_raw(&raw.copy, false).unwrap_or_else(|_| KeysConfiguration::default().copy),
-            paste: KeyBind::from_raw(&raw.paste, false).unwrap_or_else(|_| KeysConfiguration::default().paste),
-            cut: KeyBind::from_raw(&raw.cut, false).unwrap_or_else(|_| KeysConfiguration::default().cut),
-            select_key: KeyBind::from_raw(&raw.select_key, true).unwrap_or_else(|_| KeysConfiguration::default().select_key),
-            hot_reload: KeyBind::from_raw(&raw.hot_reload, false).unwrap_or_else(|_| KeysConfiguration::default().select_key),
+            quit: KeyBind::from_raw(&raw.quit, false).unwrap_or(default.quit),
+            move_up: KeyBind::from_raw(&raw.move_up, false).unwrap_or(default.move_up),
+            move_down: KeyBind::from_raw(&raw.move_down, false).unwrap_or(default.move_down),
+            move_left: KeyBind::from_raw(&raw.move_left, false).unwrap_or(default.move_left),
+            move_right: KeyBind::from_raw(&raw.move_right, false).unwrap_or(default.move_right),
+            move_to_start: KeyBind::from_raw(&raw.move_to_start, false).unwrap_or(default.move_to_start),
+            move_to_end: KeyBind::from_raw(&raw.move_to_end, false).unwrap_or(default.move_to_end),
+            move_token_left: KeyBind::from_raw(&raw.move_token_left, false).unwrap_or(default.move_token_left),
+            move_token_right: KeyBind::from_raw(&raw.move_token_right, false).unwrap_or(default.move_token_right),
+            //get_token: KeyBind::from_raw(&raw.get_token).unwrap_or(default.get_token),
+            //tokenize_text: KeyBind::from_raw(&raw.tokenize_text).unwrap_or(default.tokenize_text),
+            move_start_line: KeyBind::from_raw(&raw.move_start_line, false).unwrap_or(default.move_start_line),
+            move_end_line: KeyBind::from_raw(&raw.move_end_line, false).unwrap_or(default.move_end_line),
+            delete_line: KeyBind::from_raw(&raw.delete_line, false).unwrap_or(default.delete_line),
+            save_file: KeyBind::from_raw(&raw.save_file, false).unwrap_or(default.save_file),
+            copy: KeyBind::from_raw(&raw.copy, false).unwrap_or(default.copy),
+            paste: KeyBind::from_raw(&raw.paste, false).unwrap_or(default.paste),
+            cut: KeyBind::from_raw(&raw.cut, false).unwrap_or(default.cut),
+            select_key: KeyBind::from_raw(&raw.select_key, true).unwrap_or(default.select_key),
+            hot_reload: KeyBind::from_raw(&raw.hot_reload, false).unwrap_or(default.hot_reload),
         }
     }
     pub fn from_toml(toml_file: &Value) -> io::Result<Self> {

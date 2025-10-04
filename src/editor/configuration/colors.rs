@@ -30,12 +30,14 @@ impl ColorConfiguration {
     }
 
     pub fn from_raw(raw: RawColors) -> Self {
+        let default= ColorConfiguration::default();
+
         Self {
-            text_color:  RawColors::str_to_color(&raw.text_color).unwrap_or_else(|_|ColorConfiguration::default().text_color),
-            line_numbering_color:  RawColors::str_to_color(&raw.line_numbering_color).unwrap_or_else(|_|ColorConfiguration::default().line_numbering_color),
-            background_color:  RawColors::str_to_color(&raw.background_color).unwrap_or_else(|_|ColorConfiguration::default().background_color),
-            dialog_color:  RawColors::str_to_color(&raw.dialog_color).unwrap_or_else(|_|ColorConfiguration::default().dialog_color),
-            dialog_text_color:  RawColors::str_to_color(&raw.dialog_text_color).unwrap_or_else(|_|ColorConfiguration::default().dialog_text_color),
+            text_color:  RawColors::str_to_color(&raw.text_color).unwrap_or(default.text_color),
+            line_numbering_color:  RawColors::str_to_color(&raw.line_numbering_color).unwrap_or(default.line_numbering_color),
+            background_color:  RawColors::str_to_color(&raw.background_color).unwrap_or(default.background_color),
+            dialog_color:  RawColors::str_to_color(&raw.dialog_color).unwrap_or(default.dialog_color),
+            dialog_text_color:  RawColors::str_to_color(&raw.dialog_text_color).unwrap_or(default.dialog_text_color),
         }
     }
 
