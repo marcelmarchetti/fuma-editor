@@ -142,7 +142,7 @@ pub fn wrap_content(content: &str, debug: bool) -> io::Result<WrapResult> {
     }
 
     if debug {
-        print_wrapper_values(width, effective_width)?;
+        print_wrapper_values(width, effective_width);
     }
 
     Ok(WrapResult { wrapped_text: segments, wrap_ids })

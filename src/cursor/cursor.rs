@@ -1,6 +1,6 @@
 ﻿use std::io;
 use crossterm::cursor::{MoveTo, Show};
-use crossterm::execute;
+use crossterm::{execute, queue};
 use std::io::{stdout, Write};
 use std::sync::atomic::Ordering;
 use crate::utils::tokenizer::{Token2};
@@ -61,14 +61,15 @@ impl CursorPos {
     }
     
     pub fn refresh(&self) -> io::Result<()> {
+        let mut out = stdout();
         let screen_y = self.y.saturating_sub(self.vertical_offset) as u16;
 
-        execute!(
-            stdout(),
+        queue!(
+            out,
             MoveTo(self.x as u16, screen_y),
             Show
         )?;
-        stdout().flush()?;
+        out.flush()?;
         Ok(())
     }
     pub(crate) fn ensure_visible(&mut self) -> io::Result<bool> {

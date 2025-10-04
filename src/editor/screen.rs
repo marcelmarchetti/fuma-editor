@@ -10,12 +10,14 @@ use crate::values::colors::{BASE, OVERLAY0, PEACH, SUBTEXT1, TEXT};
 use crate::values::globals::{DELIMITATOR, SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN};
 
 pub fn clean_screen() -> io::Result<()>{
-    execute!(
-        stdout(),
+    let mut out = stdout();
+    queue!(
+        out,
         MoveTo(0, 0),
         Clear(ClearType::All),
         Show
     )?;
+    out.flush()?;
     disable_raw_mode()?;
     Ok(())
 }
