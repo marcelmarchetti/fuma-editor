@@ -5,9 +5,7 @@ use crossterm::cursor::{Hide, MoveTo, Show};
 use crossterm::{queue};
 use crossterm::style::{Attribute, Print, ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor};
 use crossterm::terminal::{disable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate};
-use crate::editor::configuration::colors::ColorConfiguration;
 use crate::editor::fuma_state::FumaState;
-use crate::values::colors::{BASE, OVERLAY0, PEACH, SUBTEXT1, TEXT};
 use crate::values::globals::{DELIMITATOR, SHOW_LINE_NUMBERING, TERMINAL_LEFT_MARGIN};
 
 pub fn clean_screen() -> io::Result<()>{

@@ -6,7 +6,6 @@ use crate::editor::keymap::{build_keymap, handle_event, ReturnEvent};
 use crate::error_helpers::main_error_helper::{try_enable_raw_mode, try_enter_alternate_screen};
 use crate::guards::alt_screen_guard::AltScreenGuard;
 use crate::{log_error, log_info};
-use crate::editor::configuration::configuration::load_config;
 
 
 pub fn program_loop(contents: String) -> io::Result<()> {
