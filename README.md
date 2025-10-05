@@ -91,11 +91,11 @@ fumaedit myfile.rs
 ---
 ## Why Rust?
 
-    -Safe and efficient memory model
+    Safe and efficient memory model
 
-    -Excellent control over terminal I/O
+    Excellent control over terminal I/O
 
-    -Perfect for low-latency editors
+    Perfect for low-latency editors
 
 ---
 ## Clean Exit Guarantee
