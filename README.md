@@ -9,7 +9,7 @@ Designed around a clean TUI architecture and inspired by modern editors — but 
 
 FumaEdit is under **active development** and already supports:
 
-- Opening and displaying text files
+- Open/create, display and edit text files
 - Custom Catppuccin-like color theme (RGB rendering via Crossterm)
 - Scrollable viewport and line numbering
 - Text selection
