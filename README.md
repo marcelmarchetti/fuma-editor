@@ -1,131 +1,217 @@
-﻿# FumaEdit - Minimal Terminal File Editor
+﻿# FumaEdit — Minimalist Terminal Text Editor
 
-A barebones terminal file editor written in Rust. Currently in early development – it handles basic file viewing only.
+A fast, modular and visually polished **terminal-based text editor** written entirely in **Rust**.  
+Designed around a clean TUI architecture and inspired by modern editors — but keeping the simplicity and control of the terminal.
+
+---
 
 ## Current State
 
-This is just a proof-of-concept. It currently supports:
+FumaEdit is under **active development** and already supports:
 
-- Opening text files via command-line argument
-- Displaying file contents in the terminal
-- Navigating through the file with arrow keys
-- Handling basic terminal resizing
+- Opening and displaying text files
+- Custom Catppuccin-like color theme (RGB rendering via Crossterm)
+- Scrollable viewport and line numbering
+- Text selection
+- Copy, paste, cut
+- Syntax tokenization groundwork for Rust (in progress)
+- Clean screen restore via RAII guard (`AltScreenGuard`)
+- Modular architecture: text buffer, cursor, renderer, parser, input handler
 
-**Warning:** This is pre-alpha software. Many essential features are missing.
+> ⚠️ This is still **alpha-quality software**. Expect bugs, missing features, and occasional jank.  
+> FumaEdit is built as both a learning project and a testbed for building a syntax-aware TUI editor in Rust.
 
 ---
 
-## Installation and Usage
+## Architecture Overview
+
+| Module             | Purpose                                                                 |
+|--------------------|-------------------------------------------------------------------------|
+| `cursor.rs`        | Tracks cursor position, boundaries, and viewport offset                 |
+| `text_buffer.rs`   | Core text storage, line editing, and insertion logic                    |
+| `renderer.rs`      | Handles terminal drawing, colors, backgrounds, and overlays             |
+| `fuma_state.rs`    | Centralized application state                                           |
+| `tokenizer.rs`     | Tokenization engine for words and symbols                               |
+| `configuration.rs` | Handles applying various configs from config.toml. Supports hot reload! |
+
+---
+## Installation & Usage
 
 ### Build from Source
 
-Clone the repository:
-
 ```bash
-  git clone https://github.com/yourusername/fuma-editor.git  
-  cd fuma-editor
+git clone https://github.com/marcelmarchetti/fuma-editor.git
+cd fuma-editor
+cargo build --release
 ```
 
-Build in release mode:
-
+#### Run:
 ```bash
-  cargo build --release
+./target/release/fumaedit yourfile.rs
 ```
-
-The binary will be located at:
-
+### Development Mode
 ```bash
-  ./target/release/fumaedit
+cargo run -- yourfile.txt
 ```
+### Install System-wide (optional)
 
----
-
-### Optional: Install System-Wide
-
-#### On Linux/macOS:
-
+#### Linux / macOS
 ```bash
-  sudo cp ./target/release/fumaedit /usr/local/bin/
+sudo cp ./target/release/fumaedit /usr/local/bin/
 ```
-
-#### On Windows:
-
+#### Windows
 ```cmd
 mkdir %USERPROFILE%\bin
 copy .\target\release\fumaedit.exe %USERPROFILE%\bin\
 setx PATH "%PATH%;%USERPROFILE%\bin"
 ```
-
-Once installed, you can run it from anywhere:
-
-```bash
-  fumaedit yourfile.txt
+#### Now you can launch:
+```
+fumaedit myfile.rs
 ```
 
 ---
 
-## Path Handling
+## Planned Features
 
-FumaEdit accepts:
+    Undo / Redo
+    
+    Syntax highlighting (Rust first, multi-language later)
+    
+    Search
+        
+    Distinct tones for syntax groups (keywords, strings, comments, etc.)
+    
+    Custom colors and themes
 
-- Absolute paths (e.g., `/home/user/file.txt`, `C:\Users\user\file.txt`)
-- Relative paths (e.g., `/file.txt`, `otherdir/file.txt`)
-- Home directory shortcuts (e.g., `~/documents/file.txt` on Unix-like systems)
-
-It attempts to resolve paths correctly regardless of format.
-
----
-
-## Development Usage
-
-To test during development:
-
-```bash
-  cargo run -- yourfile.txt
-```
+    
+    
+    
 
 ---
-
-## Controls
-
-- Arrow keys: Move cursor
-- `Ctrl + ←` / `Ctrl + →`: Jump to the start/end of the current token
-- `Home` / `End`: Jump to start / end of line
-- `Ctrl + q`: Quit
-
----
-
-## Technical Details
-
-Built using:
-
-- Crossterm for terminal handling
-- Standard Rust I/O
-- Basic line-wrapping and viewport management
-
----
-
-## Roadmap
-
-Planned features:
-
-- Basic text editing
-- File saving
-- Improved error handling
-- More efficient rendering
-
----
-
 ## Why Rust?
 
-Chosen for:
+    -Safe and efficient memory model
 
-- Learning something new
-- Memory safety
-- Excellent performance
+    -Excellent control over terminal I/O
+
+    -Perfect for low-latency editors
+
+---
+## Clean Exit Guarantee
+
+FumaEdit automatically restores your terminal using a RAII-based guard:
+
+```Rust
+pub struct AltScreenGuard;
+
+impl Drop for AltScreenGuard {
+    fn drop(&mut self) {
+        let _ = clean_screen();
+        let _ = execute!(stdout(), LeaveAlternateScreen, Show);
+    }
+}
+```
+No matter how the editor exits — your terminal stays clean.
 
 ---
 
-## Disclaimer
+## Configuration
 
-This is a personal project in active development. If you use this in a production environment, you're officially a terrorist.
+FumaEdit supports external configuration via a [config.toml](./docs/config.md) file, allowing you to customize **key bindings**, **editor behavior**, **debug tools**, and **theme colors** — all with **hot reload** support.  
+You can modify the file while FumaEdit is running and reload it instantly with `Ctrl + R`.
+
+### File Location
+
+By default, `config.toml` should be located in the same directory as the binary, or in your user configuration folder (coming soon).
+
+---
+
+### Bindings
+
+Customize every editor shortcut with simple, human-readable key definitions.
+
+```toml
+[bindings]
+quit = "control q"
+move_up = "up"
+move_down = "down"
+move_left = "left"
+move_right = "right"
+move_to_start = "home"
+move_to_end = "end"
+move_token_left = "control left"
+move_token_right = "control right"
+move_start_line = "control h"
+move_end_line = "control l"
+delete_line = "control d"
+save_file = "control s"
+
+copy = "control c"
+paste = "control v"
+cut = "control x"
+
+select_key = "shift"
+hot_reload = "control r"
+```
+All bindings correspond directly to Crossterm key events, so the mapping is intuitive and easy to extend.
+You can freely reassign shortcuts — the parser resolves multi-key combinations automatically.
+
+### Editor
+
+Basic editor behavior toggles:
+```toml
+[editor]
+line_numbering = true #Toggles left-side line numbers.
+autosave = false #Automatically writes the current buffer to disk when any change is made in it (currently experimental).
+```
+
+### Debug
+
+Developer-focused debugging flags. Useful for visualizing internal editor logic during development.
+```toml
+[debug]
+debug_wrapping = false #Prints wrapping and viewport logic information.
+debug_tokenizer = false #Displays token generation step-by-step.
+debug_selection = false #Shows how selections are handled internally.
+```
+
+### Color
+
+Configure your editor’s color scheme by referencing any of the RGB constants defined in [color.rs](./src/values/colors.rs).
+
+```toml
+[color]
+text_color = "text"
+line_numbering_color = "mauve"
+background_color = "base"
+dialog_color = "overlay0"
+dialog_text_color = "subtext1"
+```
+
+Fuma automatically maps string identifiers to these values at runtime.
+Available options correspond to the predefined color constants listed in [Colors](./docs/colors.md).
+
+
+### Hot Reload
+
+Any changes made to config.toml can be applied without restarting the editor.
+Simply press your configured hot_reload key (default: Ctrl + r) and Fuma will reload your configuration instantly.
+
+    This makes theme and keybinding experimentation extremely fast — perfect for live tweaking your setup.
+---
+## Philosophy
+
+“Minimal core. Maximum extensibility.”
+
+FumaEdit is built to be hackable, readable, and expandable, not bloated.
+
+Every subsystem (rendering, state, parsing, input) is kept isolated and replaceable.
+
+---
+## ⚠️ Disclaimer
+
+This project is still experimental.
+If you somehow use it in production or sensible files, you’re legally classified as a chaotic neutral wizard.
+
+Marcel Marchetti
