@@ -1,10 +1,12 @@
 use std::{fs, io};
+use dirs::config_dir;
 use toml::Value;
 use crate::{log_debug, log_error, log_info};
 use crate::editor::configuration::bindings::{KeysConfiguration};
 use crate::editor::configuration::colors::ColorConfiguration;
 use crate::editor::configuration::debug::DebugConfiguration;
 use crate::editor::configuration::editor::EditorConfiguration;
+use crate::values::globals::DEFAULT_CONFIG;
 
 pub struct Configuration {
     pub bindings: KeysConfiguration,
@@ -39,32 +41,45 @@ impl Configuration {
     }
 }
 
-
-
 pub fn load_config() -> io::Result<Configuration> {
-    let conf_content = fs::read_to_string("config.toml");
+    let Some(mut path) = config_dir() else {
+        log_error!("Could not determine config directory, using defaults");
+        return Ok(Configuration::default());
+    };
 
-    match conf_content {
-        Ok(content) => {
-            let toml_file: Value = match toml::from_str(&content) {
-                Ok(val) => { 
-                    log_info!("Loaded configuration from TOML");    
-                    val
-                },
-                Err(e) => {
-                    log_error!("Invalid config file ({}), using default keybinds", e);
-                    return Ok(Configuration::default());
-                }
-            };
+    path.push("fuma-editor");
+    fs::create_dir_all(&path).ok();
+    path.push("config.toml");
 
+    if !path.exists() {
+        log_info!("Config not found, creating default at {}", path.display());
+        fs::write(&path, DEFAULT_CONFIG)?;
+    }
+
+    let content = match fs::read_to_string(&path) {
+        Ok(c) => c,
+        Err(_) => {
+            log_error!("Could not read config, using defaults");
+            return Ok(Configuration::default());
+        }
+    };
+
+    match toml::from_str::<Value>(&content) {
+        Ok(toml_file) => {
             match Configuration::new(&toml_file) {
-                Ok(cfg) => Ok(cfg),
-                Err(_) => Ok(Configuration::default()),
+                Ok(cfg) => {
+                    log_info!("Loaded configuration from {}", path.display());
+                    Ok(cfg)
+                }
+                Err(_) => {
+                    log_error!("Config content invalid, using defaults (file kept as is)");
+                    Ok(Configuration::default())
+                }
             }
         }
-
-        Err(_) => {
-            log_error!("config.toml not found, using default keybinds");
+        Err(e) => {
+            log_error!("Invalid TOML in {}: {}", path.display(), e);
+            log_error!("Using default config in memory (file NOT overwritten)");
             Ok(Configuration::default())
         }
     }
